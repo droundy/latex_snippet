@@ -4,3 +4,5 @@ Cargo.lock
 
 *~
 __pycache__
+venv
+latex_snippet/latex_snippet
