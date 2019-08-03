@@ -4,12 +4,13 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
         if latex.len() == 0 {
             return Ok(());
         }
-        if let Some(i) = latex.find(|c| c == '\\' || c == '{') {
+        if let Some(i) = latex.find(|c| c == '\\' || c == '{' || c == '$') {
             fmt.write_str(&latex[..i])?;
             println!("found i {}", i);
             latex = &latex[i..];
+            let c = latex.chars().next().unwrap();
             println!("latex is now {:?}", latex);
-            if latex.chars().next().unwrap() == '\\' {
+            if c == '\\' {
                 let name = macro_name(latex);
                 latex = &latex[name.len()..];
                 match name {
@@ -49,6 +50,14 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                     _ => {
                         write!(fmt, r#"<span class="error">{}</span>"#, name)?;
                     }
+                }
+            } else if c == '$' {
+                if let Some(i) = latex[1..].find('$') {
+                    fmt.write_str(&latex[..i+2])?;
+                    latex = &latex[i+2..];
+                } else {
+                    fmt.write_str(r#"<span class="error">$</span>"#)?;
+                    latex = &latex[1..];
                 }
             } else {
                 let arg = argument(latex);
@@ -165,6 +174,10 @@ fn emph_hello() {
 #[test]
 fn hello_it() {
     assert_eq!("hello good <em>world</em>", &html_string(r"hello {good \it world}"));
+}
+#[test]
+fn inline_math() {
+    assert_eq!(r"hello good $\cos^2x$ math", &html_string(r"hello good $\cos^2x$ math"));
 }
 #[test]
 fn equation() {
