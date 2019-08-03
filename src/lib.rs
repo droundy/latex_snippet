@@ -97,6 +97,11 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                                    name, env)?;
                         }
                     }
+                    r"\end" => {
+                        let name = env_name(latex);
+                        latex = &latex[name.len()..];
+                        write!(fmt,r#"<span class="error">\end{}</span>"#, name)?;
+                    }
                     _ => {
                         write!(fmt, r#"<span class="error">{}</span>"#, name)?;
                     }
@@ -235,6 +240,14 @@ stuff
 \end{broken}</span>"#, &html_string(r"hello \begin{broken}
 stuff
 \end{broken}"));
+}
+#[test]
+fn unrecognized_unbalanced_env() {
+    assert_eq!(r#"hello <span class="error">\begin{broken}</span>
+stuff
+<span class="error">\end{broke}</span>"#, &html_string(r"hello \begin{broken}
+stuff
+\end{broke}"));
 }
 #[test]
 fn equation() {
