@@ -35,10 +35,8 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
         }
         if let Some(i) = latex.find(|c| c == '\\' || c == '{' || c == '$') {
             fmt.write_str(&latex[..i])?;
-            println!("found i {}", i);
             latex = &latex[i..];
             let c = latex.chars().next().unwrap();
-            println!("latex is now {:?}", latex);
             if c == '\\' {
                 let name = macro_name(latex);
                 latex = &latex[name.len()..];
@@ -98,7 +96,6 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                 }
             }
         } else {
-            println!("could not find anything in {:?}", latex);
             return fmt.write_str(latex);
         }
     }
@@ -108,10 +105,8 @@ fn finish_standalone_macro(latex: &str) -> &str {
     if latex.len() == 0 {
         ""
     } else if latex.chars().next().unwrap() == ' ' {
-        println!("foo bar {:?}", latex);
         &latex[1..]
     } else {
-        println!("it was {:?}", latex);
         latex
     }
 }
