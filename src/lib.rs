@@ -1,3 +1,16 @@
+#![deny(missing_docs)]
+
+//! This crate turns (a subset of) latex into html, with syntax errors
+//! reported using span elements.
+
+/// Convert some LaTeX into an HTML `String`.
+pub fn html_string(latex: &str) -> String {
+    let mut s = String::with_capacity(latex.len());
+    html(&mut s, latex).unwrap();
+    s
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
 pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
@@ -155,12 +168,6 @@ fn argument(latex: &str) -> &str {
 fn test_argument() {
     assert_eq!(argument(r"{foo"), r"{");
     assert_eq!(argument(r"{foo}  "), r"{foo}");
-}
-
-pub fn html_string(latex: &str) -> String {
-    let mut s = String::with_capacity(latex.len());
-    html(&mut s, latex).unwrap();
-    s
 }
 
 #[test]
