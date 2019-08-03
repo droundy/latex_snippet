@@ -90,6 +90,11 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                             } else {
                                 write!(fmt,r#"\begin{}{}"#, name, env)?;
                             }
+                        } else {
+                            let env = end_env(name, latex);
+                            latex = &latex[env.len()..];
+                            write!(fmt, r#"<span class="error">\begin{}{}</span>"#,
+                                   name, env)?;
                         }
                     }
                     _ => {
@@ -222,6 +227,14 @@ fn escape_space() {
 #[test]
 fn escape_percent() {
     assert_eq!(r"50% full", &html_string(r"50\% full"));
+}
+#[test]
+fn unrecognized_env() {
+    assert_eq!(r#"hello <span class="error">\begin{broken}
+stuff
+\end{broken}</span>"#, &html_string(r"hello \begin{broken}
+stuff
+\end{broken}"));
 }
 #[test]
 fn equation() {
