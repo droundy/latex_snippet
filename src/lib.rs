@@ -58,6 +58,12 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                         html(fmt, latex)?;
                         return fmt.write_str("</i>");
                     }
+                    r"\ " => {
+                        fmt.write_str(" ")?;
+                    }
+                    r"\%" => {
+                        fmt.write_str("%")?;
+                    }
                     r"\bf" => {
                         latex = finish_standalone_macro(latex);
                         fmt.write_str("<b>")?;
@@ -208,6 +214,14 @@ fn hello_it() {
 #[test]
 fn inline_math() {
     assert_eq!(r"hello good $\cos^2x$ math", &html_string(r"hello good $\cos^2x$ math"));
+}
+#[test]
+fn escape_space() {
+    assert_eq!(r"hello<i> world</i>", &html_string(r"hello\it\ world"));
+}
+#[test]
+fn escape_percent() {
+    assert_eq!(r"50% full", &html_string(r"50\% full"));
 }
 #[test]
 fn equation() {
