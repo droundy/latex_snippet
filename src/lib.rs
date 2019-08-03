@@ -3,6 +3,22 @@
 //! This crate turns (a subset of) latex into html, with syntax errors
 //! reported using span elements.
 
+/// A version of html_string suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+    if s.is_null() {
+        return std::ptr::null();
+    }
+    let c_str = unsafe { std::ffi::CStr::from_ptr(s) };
+    if let Ok(my_str) = c_str.to_str() {
+        let output = html_string(my_str);
+        std::ffi::CString::new(output).unwrap().into_raw()
+    } else {
+        std::ptr::null()
+    }
+}
+
+
 /// Convert some LaTeX into an HTML `String`.
 pub fn html_string(latex: &str) -> String {
     let mut s = String::with_capacity(latex.len());
