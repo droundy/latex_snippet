@@ -54,9 +54,21 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                     }
                     r"\it" => {
                         latex = finish_standalone_macro(latex);
-                        fmt.write_str("<em>")?;
+                        fmt.write_str("<i>")?;
                         html(fmt, latex)?;
-                        return fmt.write_str("</em>");
+                        return fmt.write_str("</i>");
+                    }
+                    r"\bf" => {
+                        latex = finish_standalone_macro(latex);
+                        fmt.write_str("<b>")?;
+                        html(fmt, latex)?;
+                        return fmt.write_str("</b>");
+                    }
+                    r"\sc" => {
+                        latex = finish_standalone_macro(latex);
+                        fmt.write_str(r#"<font style="font-variant: small-caps">"#)?;
+                        html(fmt, latex)?;
+                        return fmt.write_str("</font>");
                     }
                     r"\begin" => {
                         // We are looking at an environment...
@@ -191,7 +203,7 @@ fn emph_hello() {
 }
 #[test]
 fn hello_it() {
-    assert_eq!("hello good <em>world</em>", &html_string(r"hello {good \it world}"));
+    assert_eq!("hello good <i>world</i>", &html_string(r"hello {good \it world}"));
 }
 #[test]
 fn inline_math() {
