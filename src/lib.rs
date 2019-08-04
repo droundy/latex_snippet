@@ -27,7 +27,12 @@ pub fn html_string(latex: &str) -> String {
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
-pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
+pub fn html(fmt: &mut impl std::fmt::Write, latex: &str) -> Result<(),std::fmt::Error> {
+    html_maybe_items(fmt, latex, false)
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
+fn html_maybe_items(fmt: &mut impl std::fmt::Write, mut latex: &str, have_items: bool) -> Result<(),std::fmt::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
         if latex.len() == 0 {
@@ -50,6 +55,16 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                             fmt.write_str("<em>")?;
                             html(fmt, arg)?;
                             fmt.write_str("</em>")?;
+                        }
+                    }
+                    r"\item" => {
+                        if have_items {
+                            latex = finish_standalone_macro(latex);
+                            fmt.write_str("<li>")?;
+                            html(fmt, latex)?;
+                            fmt.write_str("</li>")?;
+                        } else {
+                            fmt.write_str(r#"<span class="error">\item</span>"#)?;
                         }
                     }
                     r"\it" => {
@@ -89,6 +104,70 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                                 write!(fmt,r#"<span class="error">\begin{}</span>"#, name)?;
                             } else {
                                 write!(fmt,r#"\begin{}{}"#, name, env)?;
+                            }
+                        } else if name == "{itemize}" {
+                            fmt.write_str("<ul>")?;
+                            let li = finish_item(latex);
+                            latex = &latex[li.len()..];
+                            if li.trim().len() > 0 {
+                                // Nothing should precede the first
+                                // \item except whitespace.
+                                write!(fmt,r#"<span class="error">{}</span>"#, li)?;
+                            }
+                            loop {
+                                let li = finish_item(latex);
+                                latex = &latex[li.len()..];
+                                if li.len() == 0 {
+                                    if latex.starts_with(r"\end{itemize}") {
+                                        latex = &latex[r"\end{itemize}".len()..];
+                                        fmt.write_str("</ul>")?;
+                                        break;
+                                    } else if latex.starts_with(r"\end{enumerate}") {
+                                        latex = &latex[r"\end{enumerate}".len()..];
+                                        fmt.write_str(r#"</ul><span class="error">\end{enumerate}</span>"#)?;
+                                        break;
+                                    } else {
+                                        // It must start with \item
+                                        latex = &latex[r"\item".len()..];
+                                        latex = finish_standalone_macro(latex);
+                                    }
+                                } else {
+                                    fmt.write_str("<li>")?;
+                                    html(fmt, li)?;
+                                    fmt.write_str("</li>")?;
+                                }
+                            }
+                        } else if name == "{enumerate}" {
+                            fmt.write_str("<ol>")?;
+                            let li = finish_item(latex);
+                            latex = &latex[li.len()..];
+                            if li.trim().len() > 0 {
+                                // Nothing should precede the first
+                                // \item except whitespace.
+                                write!(fmt,r#"<span class="error">{}</span>"#, li)?;
+                            }
+                            loop {
+                                let li = finish_item(latex);
+                                latex = &latex[li.len()..];
+                                if li.len() == 0 {
+                                    if latex.starts_with(r"\end{itemize}") {
+                                        latex = &latex[r"\end{itemize}".len()..];
+                                        fmt.write_str(r#"</ol><span class="error">\end{enumerate}</span>"#)?;
+                                        break;
+                                    } else if latex.starts_with(r"\end{enumerate}") {
+                                        latex = &latex[r"\end{enumerate}".len()..];
+                                        fmt.write_str("</ol>")?;
+                                        break;
+                                    } else {
+                                        // It must start with \item
+                                        latex = &latex[r"\item".len()..];
+                                        latex = finish_standalone_macro(latex);
+                                    }
+                                } else {
+                                    fmt.write_str("<li>")?;
+                                    html(fmt, li)?;
+                                    fmt.write_str("</li>")?;
+                                }
                             }
                         } else {
                             let env = end_env(name, latex);
@@ -177,6 +256,53 @@ fn end_env<'a>(name: &str, latex: &'a str) -> &'a str {
     }
 }
 
+fn earlier(a: Option<usize>, b: Option<usize>) -> bool {
+    if let Some(b) = b {
+        if let Some(a) = a {
+            a < b
+        } else {
+            false
+        }
+    } else {
+        true
+    }
+}
+
+fn finish_item<'a>(latex: &'a str) -> &'a str {
+    if latex.len() == 0 {
+        return "";
+    }
+    let end_list = regex::Regex::new(r"\\end\{(itemize|enumerate)\}").unwrap();
+    let begin_list = regex::Regex::new(r"\\begin\{(itemize|enumerate)\}").unwrap();
+    let mut so_far = 0;
+    let mut nestedness = 0;
+    loop {
+        let next_item = latex[so_far..].find(r"\item");
+        let next_end = end_list.find(&latex[so_far..]).map(|m| m.start());
+        let next_begin = begin_list.find(&latex[so_far..]).map(|m| m.start());
+        if nestedness == 0 && earlier(next_item, next_begin) && earlier(next_item, next_end) {
+            if let Some(i) = next_item {
+                return &latex[..so_far + i]
+            } else {
+                // There is no end to this
+                return "";
+            }
+        } else if earlier(next_end, next_begin) {
+            let i = next_end.unwrap();
+            if nestedness == 0 {
+                return &latex[..so_far + i];
+            } else {
+                nestedness -= 1;
+                so_far += i + r"\\end{".len();
+            }
+        } else {
+            let i = next_begin.unwrap();
+            nestedness += 1;
+            so_far += i + r"\\begin{".len();
+        }
+    }
+}
+
 fn argument(latex: &str) -> &str {
     if latex.len() == 0 {
         ""
@@ -262,5 +388,64 @@ some more math
  y = x^2
 \end{equation}
 some more math
+"));
+}
+
+#[test]
+fn itemize() {
+    assert_eq!(r"
+<ul><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li><li>Pears
+</li></ul>
+some more stuff
+",
+               &html_string(r"
+\begin{itemize}
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{itemize}
+some more stuff
+"));
+}
+
+#[test]
+fn enumerate() {
+    assert_eq!(r#"
+<ol><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li><li>Pears
+</li></ol>
+some more stuff
+"#,
+               &html_string(r"
+\begin{enumerate}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{enumerate}
+some more stuff
 "));
 }

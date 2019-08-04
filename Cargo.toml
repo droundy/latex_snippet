@@ -10,6 +10,8 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 
+regex = "1"
+
 [lib]
 name = "latex_snippet"
 crate-type = ["cdylib", "lib"]
