@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ev
+
+cargo publish
+
+pyo3-pack publish -b cffi -u David.Roundy
