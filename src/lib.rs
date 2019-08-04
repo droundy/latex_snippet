@@ -41,6 +41,9 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
                 let name = macro_name(latex);
                 latex = &latex[name.len()..];
                 match name {
+                    r"\\" => {
+                        fmt.write_str("<br/>")?;
+                    }
                     r"\emph" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
@@ -350,6 +353,13 @@ fn escape_space() {
 fn escape_percent() {
     assert_eq!(r"50% full", &html_string(r"50\% full"));
 }
+
+#[test]
+fn line_break() {
+    assert_eq!(r"Hello world<br/>this is a new line",
+               &html_string(r"Hello world\\this is a new line"));
+}
+
 #[test]
 fn unrecognized_env() {
     assert_eq!(r#"hello <span class="error">\begin{broken}
