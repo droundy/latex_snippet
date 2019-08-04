@@ -27,12 +27,7 @@ pub fn html_string(latex: &str) -> String {
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
-pub fn html(fmt: &mut impl std::fmt::Write, latex: &str) -> Result<(),std::fmt::Error> {
-    html_maybe_items(fmt, latex, false)
-}
-
-/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
-fn html_maybe_items(fmt: &mut impl std::fmt::Write, mut latex: &str, have_items: bool) -> Result<(),std::fmt::Error> {
+pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
         if latex.len() == 0 {
@@ -55,16 +50,6 @@ fn html_maybe_items(fmt: &mut impl std::fmt::Write, mut latex: &str, have_items:
                             fmt.write_str("<em>")?;
                             html(fmt, arg)?;
                             fmt.write_str("</em>")?;
-                        }
-                    }
-                    r"\item" => {
-                        if have_items {
-                            latex = finish_standalone_macro(latex);
-                            fmt.write_str("<li>")?;
-                            html(fmt, latex)?;
-                            fmt.write_str("</li>")?;
-                        } else {
-                            fmt.write_str(r#"<span class="error">\item</span>"#)?;
                         }
                     }
                     r"\it" => {
@@ -126,10 +111,13 @@ fn html_maybe_items(fmt: &mut impl std::fmt::Write, mut latex: &str, have_items:
                                         latex = &latex[r"\end{enumerate}".len()..];
                                         fmt.write_str(r#"</ul><span class="error">\end{enumerate}</span>"#)?;
                                         break;
-                                    } else {
+                                    } else if latex.starts_with(r"\item") {
                                         // It must start with \item
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
+                                    } else {
+                                        fmt.write_str(r#"</ul><span class="error">MISSING END</span>"#)?;
+                                        break;
                                     }
                                 } else {
                                     fmt.write_str("<li>")?;
@@ -158,10 +146,13 @@ fn html_maybe_items(fmt: &mut impl std::fmt::Write, mut latex: &str, have_items:
                                         latex = &latex[r"\end{enumerate}".len()..];
                                         fmt.write_str("</ol>")?;
                                         break;
-                                    } else {
+                                    } else if latex.starts_with(r"\item") {
                                         // It must start with \item
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
+                                    } else {
+                                        fmt.write_str(r#"</ol><span class="error">MISSING END</span>"#)?;
+                                        break;
                                     }
                                 } else {
                                     fmt.write_str("<li>")?;
@@ -446,6 +437,76 @@ buggy
 \end{itemize}
 \item Pears
 \end{enumerate}
+some more stuff
+"));
+}
+
+#[test]
+fn incomplet_begin() {
+    assert_eq!(r#"
+<span class="error">\begin{enum</span>"#,
+               &html_string(r"
+\begin{enum"));
+}
+
+#[test]
+fn incomplet_end() {
+    assert_eq!(r#"
+<ol><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li></ol><span class="error">MISSING END</span>Pears
+<span class="error">\end{enumerate
+</span>some more stuff
+"#,
+               &html_string(r"
+\begin{enumerate}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{enumerate
+some more stuff
+"));
+}
+
+#[test]
+fn incomplet_end_itemize() {
+    assert_eq!(r#"
+<ul><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li></ul><span class="error">MISSING END</span>Pears
+<span class="error">\end{itemize
+</span>some more stuff
+"#,
+               &html_string(r"
+\begin{itemize}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{itemize
 some more stuff
 "));
 }
