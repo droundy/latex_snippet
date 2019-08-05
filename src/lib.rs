@@ -28,6 +28,25 @@ pub fn html_string(latex: &str) -> String {
 
 /// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
 pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
+    let am_alone = finish_paragraph(latex).len() == latex.len();
+    loop {
+        let p = finish_paragraph(latex);
+        if p.len() == 0 {
+            return Ok(());
+        }
+        if !am_alone {
+            fmt.write_str("<p>")?;
+        }
+        html_paragraph(fmt, p)?;
+        if !am_alone {
+            fmt.write_str("</p>")?;
+        }
+        latex = &latex[p.len()..];
+    }
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
+pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
         if latex.len() == 0 {
@@ -262,7 +281,52 @@ fn earlier(a: Option<usize>, b: Option<usize>) -> bool {
     }
 }
 
-fn finish_item<'a>(latex: &'a str) -> &'a str {
+fn finish_paragraph(latex: &str) -> &str {
+    if latex.len() == 0 {
+        return "";
+    }
+    let mut so_far = 0;
+    let mut nestedness = 0;
+    loop {
+        let next_paragraph = latex[so_far..].find("\n\n");
+        let next_end = latex[so_far..].find(r"\end{");
+        let next_begin = latex[so_far..].find(r"\begin{");
+        if earlier(next_paragraph, next_begin)
+            && earlier(next_paragraph, next_end)
+        {
+            if nestedness == 0 {
+                if let Some(i) = next_paragraph {
+                    so_far += i;
+                    while latex.len() > so_far+1
+                        && latex[so_far+1..].chars().next() == Some('\n')
+                    {
+                        so_far += 1;
+                    }
+                    return &latex[..so_far+1]
+                } else {
+                    // There is no end to this
+                    return latex;
+                }
+            } else {
+                return latex;
+            }
+        } else if earlier(next_end, next_begin) {
+            let i = next_end.unwrap();
+            if nestedness == 0 {
+                return &latex[..so_far + i];
+            } else {
+                nestedness -= 1;
+                so_far += i + r"\\end{".len();
+            }
+        } else {
+            let i = next_begin.unwrap();
+            nestedness += 1;
+            so_far += i + r"\\begin{".len();
+        }
+    }
+}
+
+fn finish_item(latex: &str) -> &str {
     if latex.len() == 0 {
         return "";
     }
@@ -358,6 +422,16 @@ fn escape_percent() {
 fn line_break() {
     assert_eq!(r"Hello world<br/>this is a new line",
                &html_string(r"Hello world\\this is a new line"));
+}
+
+#[test]
+fn paragraphs() {
+    assert_eq!(r"<p>The first paragraph
+
+</p><p>The second paragraph</p>",
+               &html_string(r"The first paragraph
+
+The second paragraph"));
 }
 
 #[test]
