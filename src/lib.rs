@@ -31,8 +31,12 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
     let am_alone = finish_paragraph(latex).len() == latex.len();
     loop {
         let p = finish_paragraph(latex);
+        latex = &latex[p.len()..];
         if p.len() == 0 {
             return Ok(());
+        }
+        if p.trim().len() == 0 {
+            continue;
         }
         if !am_alone {
             fmt.write_str("<p>")?;
@@ -41,7 +45,6 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
         if !am_alone {
             fmt.write_str("</p>")?;
         }
-        latex = &latex[p.len()..];
     }
 }
 
@@ -72,6 +75,17 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                             fmt.write_str("<em>")?;
                             html(fmt, arg)?;
                             fmt.write_str("</em>")?;
+                        }
+                    }
+                    r"\paragraph" => {
+                        let arg = argument(latex);
+                        latex = latex[arg.len()..].trim_start();
+                        if arg == "{" {
+                            fmt.write_str(r#"<span class="error">\emph{</span>"#)?;
+                        } else {
+                            fmt.write_str("<h4>")?;
+                            html(fmt, arg)?;
+                            fmt.write_str("</h4>")?;
                         }
                     }
                     r"\it" => {
@@ -400,6 +414,15 @@ fn hello_world() {
 #[test]
 fn emph_hello() {
     assert_eq!("<em>hello</em>", &html_string(r"\emph{hello}"));
+}
+#[test]
+fn paragraph_test() {
+    assert_eq!("<p><h4>hello</h4>This is good
+</p>", &html_string(r"
+
+\paragraph{hello}
+This is good
+"));
 }
 #[test]
 fn hello_it() {
