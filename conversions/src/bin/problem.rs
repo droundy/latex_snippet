@@ -1,5 +1,7 @@
 use auto_args::AutoArgs;
 
+use std::io::Write;
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, AutoArgs)]
 enum Format {
     /// HTML format
@@ -156,11 +158,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             latex_snippet::html(&mut std::io::stdout(), &latex)?;
         }
         Format::PDF => {
-            println!("have not yet implemented PDF output");
-            std::process::exit(1);
+            let dir = tempfile::tempdir()?;
+            std::env::set_current_dir(&dir)?;
+            let mut contents = String::new();
+            use std::fmt::Write;
+            contents.write_str(r"\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{fullpage}
+\usepackage{color}
+\newcommand\error[1]{\textcolor{red}{\it #1}}
+\newcommand\warning[1]{\textcolor{blue}{\it #1}}
+
+\begin{document}
+\title{A single problem}
+\maketitle
+")?;
+            contents.write_str(&latex);
+            contents.write_str(r"
+\end{document}
+")?;
+            std::fs::write("problem.tex", &contents)?;
+            std::process::Command::new("pdflatex")
+                .args(&["problem.tex"])
+                .stderr(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .status()?;
+            std::process::Command::new("pdflatex")
+                .args(&["problem.tex"])
+                .stderr(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .status()?;
+            let mut file = std::fs::File::open("problem.pdf")?;
+            std::io::copy(&mut file, &mut std::io::stdout())?;
         }
         Format::Latex => {
-            use std::io::Write;
             std::io::stdout().write_all(latex.as_bytes())?;
         }
     }
