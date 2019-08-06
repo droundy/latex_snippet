@@ -39,7 +39,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         use std::io::Read;
         std::io::stdin().read_to_string(&mut latex)?;
     }
-    let latex = latex;
+    let mut latex: &str = &latex;
+    let mut refined = String::with_capacity(latex.len());
+    if args.solution {
+        loop {
+            if let Some(i) = latex.find(r"\begin{solution}") {
+                refined.push_str(&latex[..i]);
+                latex = &latex[i + r"\begin{solution}".len()..];
+
+                refined.push_str(r"\paragraph*{Solution}{\it ");
+                if let Some(i) = latex.find(r"\end{solution}") {
+                    refined.push_str(&latex[..i]);
+                    latex = &latex[i + r"\end{solution}".len()..];
+                } else {
+                    refined.push_str(latex);
+                    break;
+                }
+            } else {
+                refined.push_str(latex);
+                break;
+            }
+        }
+    } else {
+        // need to strip out solutions...
+        loop {
+            if let Some(i) = latex.find(r"\begin{solution}") {
+                refined.push_str(&latex[..i]);
+                latex = &latex[i + r"\begin{solution}".len()..];
+                if let Some(i) = latex.find(r"\end{solution}") {
+                    latex = &latex[i + r"\end{solution}".len()..];
+                } else {
+                    break;
+                }
+            } else {
+                refined.push_str(latex);
+                break;
+            }
+        }
+    }
+    let latex = refined;
 
     match args._format {
         Format::HTML => {
@@ -50,8 +88,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::process::exit(1);
         }
         Format::Latex => {
-            println!("have not yet implemented LaTeX output");
-            std::process::exit(1);
+            use std::io::Write;
+            std::io::stdout().write_all(latex.as_bytes())?;
         }
     }
     Ok(())
