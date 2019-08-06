@@ -17,3 +17,5 @@ name = "latex_snippet"
 crate-type = ["cdylib", "lib"]
 
 [package.metadata.pyo3-pack]
+
+[workspace]

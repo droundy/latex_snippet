@@ -21,13 +21,13 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
 
 /// Convert some LaTeX into an HTML `String`.
 pub fn html_string(latex: &str) -> String {
-    let mut s = String::with_capacity(latex.len());
+    let mut s: Vec<u8> = Vec::with_capacity(latex.len());
     html(&mut s, latex).unwrap();
-    s
+    String::from_utf8(s).expect("should be no problem with utf8 conversion")
 }
 
-/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
-pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
+/// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
+pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(),std::io::Error> {
     let am_alone = finish_paragraph(latex).len() == latex.len();
     loop {
         let p = finish_paragraph(latex);
@@ -39,24 +39,24 @@ pub fn html(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::f
             continue;
         }
         if !am_alone {
-            fmt.write_str("<p>")?;
+            fmt.write_all(b"<p>")?;
         }
         html_paragraph(fmt, p)?;
         if !am_alone {
-            fmt.write_str("</p>")?;
+            fmt.write_all(b"</p>")?;
         }
     }
 }
 
-/// Convert some LaTeX into HTML, and send the results to a `std::fmt::Write`.
-pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result<(),std::fmt::Error> {
+/// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
+pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(),std::io::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
         if latex.len() == 0 {
             return Ok(());
         }
         if let Some(i) = latex.find(|c| c == '\\' || c == '{' || c == '$') {
-            fmt.write_str(&latex[..i])?;
+            fmt.write_all(latex[..i].as_bytes())?;
             latex = &latex[i..];
             let c = latex.chars().next().unwrap();
             if c == '\\' {
@@ -64,53 +64,53 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                 latex = &latex[name.len()..];
                 match name {
                     r"\\" => {
-                        fmt.write_str("<br/>")?;
+                        fmt.write_all(b"<br/>")?;
                     }
                     r"\emph" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
-                            fmt.write_str(r#"<span class="error">\emph{</span>"#)?;
+                            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
                         } else {
-                            fmt.write_str("<em>")?;
+                            fmt.write_all(b"<em>")?;
                             html(fmt, arg)?;
-                            fmt.write_str("</em>")?;
+                            fmt.write_all(b"</em>")?;
                         }
                     }
                     r"\paragraph" => {
                         let arg = argument(latex);
                         latex = latex[arg.len()..].trim_start();
                         if arg == "{" {
-                            fmt.write_str(r#"<span class="error">\emph{</span>"#)?;
+                            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
                         } else {
-                            fmt.write_str("<h4>")?;
+                            fmt.write_all(b"<h4>")?;
                             html(fmt, arg)?;
-                            fmt.write_str("</h4>")?;
+                            fmt.write_all(b"</h4>")?;
                         }
                     }
                     r"\it" => {
                         latex = finish_standalone_macro(latex);
-                        fmt.write_str("<i>")?;
+                        fmt.write_all(b"<i>")?;
                         html(fmt, latex)?;
-                        return fmt.write_str("</i>");
+                        return fmt.write_all(b"</i>");
                     }
                     r"\ " => {
-                        fmt.write_str(" ")?;
+                        fmt.write_all(b" ")?;
                     }
                     r"\%" => {
-                        fmt.write_str("%")?;
+                        fmt.write_all(b"%")?;
                     }
                     r"\bf" => {
                         latex = finish_standalone_macro(latex);
-                        fmt.write_str("<b>")?;
+                        fmt.write_all(b"<b>")?;
                         html(fmt, latex)?;
-                        return fmt.write_str("</b>");
+                        return fmt.write_all(b"</b>");
                     }
                     r"\sc" => {
                         latex = finish_standalone_macro(latex);
-                        fmt.write_str(r#"<font style="font-variant: small-caps">"#)?;
+                        fmt.write_all(br#"<font style="font-variant: small-caps">"#)?;
                         html(fmt, latex)?;
-                        return fmt.write_str("</font>");
+                        return fmt.write_all(b"</font>");
                     }
                     r"\begin" => {
                         // We are looking at an environment...
@@ -127,7 +127,7 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                                 write!(fmt,r#"\begin{}{}"#, name, env)?;
                             }
                         } else if name == "{itemize}" {
-                            fmt.write_str("<ul>")?;
+                            fmt.write_all(b"<ul>")?;
                             let li = finish_item(latex);
                             latex = &latex[li.len()..];
                             if li.trim().len() > 0 {
@@ -141,28 +141,28 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                                 if li.len() == 0 {
                                     if latex.starts_with(r"\end{itemize}") {
                                         latex = &latex[r"\end{itemize}".len()..];
-                                        fmt.write_str("</ul>")?;
+                                        fmt.write_all(b"</ul>")?;
                                         break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
-                                        fmt.write_str(r#"</ul><span class="error">\end{enumerate}</span>"#)?;
+                                        fmt.write_all(br#"</ul><span class="error">\end{enumerate}</span>"#)?;
                                         break;
                                     } else if latex.starts_with(r"\item") {
                                         // It must start with \item
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
                                     } else {
-                                        fmt.write_str(r#"</ul><span class="error">MISSING END</span>"#)?;
+                                        fmt.write_all(br#"</ul><span class="error">MISSING END</span>"#)?;
                                         break;
                                     }
                                 } else {
-                                    fmt.write_str("<li>")?;
+                                    fmt.write_all(b"<li>")?;
                                     html(fmt, li)?;
-                                    fmt.write_str("</li>")?;
+                                    fmt.write_all(b"</li>")?;
                                 }
                             }
                         } else if name == "{enumerate}" {
-                            fmt.write_str("<ol>")?;
+                            fmt.write_all(b"<ol>")?;
                             let li = finish_item(latex);
                             latex = &latex[li.len()..];
                             if li.trim().len() > 0 {
@@ -176,24 +176,24 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                                 if li.len() == 0 {
                                     if latex.starts_with(r"\end{itemize}") {
                                         latex = &latex[r"\end{itemize}".len()..];
-                                        fmt.write_str(r#"</ol><span class="error">\end{enumerate}</span>"#)?;
+                                        fmt.write_all(br#"</ol><span class="error">\end{enumerate}</span>"#)?;
                                         break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
-                                        fmt.write_str("</ol>")?;
+                                        fmt.write_all(b"</ol>")?;
                                         break;
                                     } else if latex.starts_with(r"\item") {
                                         // It must start with \item
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
                                     } else {
-                                        fmt.write_str(r#"</ol><span class="error">MISSING END</span>"#)?;
+                                        fmt.write_all(br#"</ol><span class="error">MISSING END</span>"#)?;
                                         break;
                                     }
                                 } else {
-                                    fmt.write_str("<li>")?;
+                                    fmt.write_all(b"<li>")?;
                                     html(fmt, li)?;
-                                    fmt.write_str("</li>")?;
+                                    fmt.write_all(b"</li>")?;
                                 }
                             }
                         } else {
@@ -214,23 +214,23 @@ pub fn html_paragraph(fmt: &mut impl std::fmt::Write, mut latex: &str) -> Result
                 }
             } else if c == '$' {
                 if let Some(i) = latex[1..].find('$') {
-                    fmt.write_str(&latex[..i+2])?;
+                    fmt.write_all(latex[..i+2].as_bytes())?;
                     latex = &latex[i+2..];
                 } else {
-                    fmt.write_str(r#"<span class="error">$</span>"#)?;
+                    fmt.write_all(br#"<span class="error">$</span>"#)?;
                     latex = &latex[1..];
                 }
             } else {
                 let arg = argument(latex);
                 latex = &latex[arg.len()..];
                 if arg == "{" {
-                    fmt.write_str(r#"<span class="error">{</span>"#)?;
+                    fmt.write_all(br#"<span class="error">{</span>"#)?;
                 } else {
                     html(fmt, &arg[1..arg.len()-1])?;
                 }
             }
         } else {
-            return fmt.write_str(latex);
+            return fmt.write_all(latex.as_bytes());
         }
     }
 }
