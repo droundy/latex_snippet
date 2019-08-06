@@ -30,13 +30,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut latex = String::new();
     if let Some(pk) = args.pk {
         let output = std::process::Command::new("mysql")
-            .args(&["-u", "osubash", "-ss", "-N", "-H", "-e",
-                    &format!("select problem_latex from osu_production.admin_app_problem where id = {}",
-                    pk)])
+            .args(&[
+                "-u",
+                "osubash",
+                "-ss",
+                "-N",
+                "-H",
+                "-e",
+                &format!(
+                    "select problem_latex from osu_production.admin_app_problem where id = {}",
+                    pk
+                ),
+            ])
             .output()
             .expect("failed to execute process");
-        latex = String::from_utf8_lossy(&output.stdout[28..output.stdout.len()-18])
-            .to_string();
+        latex = String::from_utf8_lossy(&output.stdout[28..output.stdout.len() - 18]).to_string();
     } else {
         use std::io::Read;
         std::io::stdin().read_to_string(&mut latex)?;
@@ -45,13 +53,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut refined = String::with_capacity(latex.len());
     if args.check {
         let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
-        let mut environments: std::collections::HashSet<String> =
-            environments.find_iter(latex)
+        let mut environments: std::collections::HashSet<String> = environments
+            .find_iter(latex)
             .map(|m| m.as_str().to_string())
             .collect();
         // The following are known good environments
-        let good_environments: &[&'static str] =
-            &["solution", "enumerate", "equation", "equation*", "align", "align*"];
+        let good_environments: &[&'static str] = &[
+            "solution",
+            "enumerate",
+            "equation",
+            "equation*",
+            "align",
+            "align*",
+        ];
         for &e in good_environments {
             environments.remove(e);
         }
@@ -60,15 +74,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let bad_environments: &[&'static str] = &["buggy"];
         for &e in bad_environments {
             if environments.contains(e) {
-                refined.push_str(&format!(r#"\error{{bad environment: {}}}\\
-"#, e));
+                refined.push_str(&format!(
+                    r#"\error{{bad environment: {}}}\\
+"#,
+                    e
+                ));
                 environments.remove(e);
             }
         }
 
         let macros = regex::Regex::new(r"\\([^0-9_/|><\\$\-+\s\(\)\[\]{}]+)").unwrap();
-        let mut macros: std::collections::HashSet<String> =
-            macros.find_iter(latex)
+        let mut macros: std::collections::HashSet<String> = macros
+            .find_iter(latex)
             .map(|m| m.as_str().to_string())
             .collect();
         // The following is a whitelist of definitely non-problematic
@@ -79,37 +96,68 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // list of things MathJax understands, since pandoc can effectively
         // pass along any math symbols without understanding them, so long
         // as MathJax *does* understand them.
-        let good_macros =
-            &["begin", "end", "includegraphics", "columnwidth",
-              "noindent", "textwidth", "item", "psi", "Psi", "textit",
-              "\"o", "\"u", "&", "%", "left", "right", "frac", "pm", ";",
-              ",", "text", "it", "em",
-            ];
+        let good_macros = &[
+            "begin",
+            "end",
+            "includegraphics",
+            "columnwidth",
+            "noindent",
+            "textwidth",
+            "item",
+            "psi",
+            "Psi",
+            "textit",
+            "\"o",
+            "\"u",
+            "&",
+            "%",
+            "left",
+            "right",
+            "frac",
+            "pm",
+            ";",
+            ",",
+            "text",
+            "it",
+            "em",
+        ];
         for &m in good_macros {
             macros.remove(m);
         }
         // Unsupported macros.
-        let bad_macros =
-            &[ "section", "section*", // could mess up problem set layout
-                "newcommand", "renewcommand", "newenvironment", // have namespacing issues
-                "usepackage", // big can of worms
-                "def", // namespacing issues?
-                "cases", // old cases that doesn't work with amsmath
-            ];
+        let bad_macros = &[
+            "section",
+            "section*", // could mess up problem set layout
+            "newcommand",
+            "renewcommand",
+            "newenvironment", // have namespacing issues
+            "usepackage",     // big can of worms
+            "def",            // namespacing issues?
+            "cases",          // old cases that doesn't work with amsmath
+        ];
         for &m in bad_macros {
             if macros.contains(m) {
-                refined.push_str(&format!(r#"\error{{bad macro: {}}}\\
-"#, &m[1..]));
+                refined.push_str(&format!(
+                    r#"\error{{bad macro: {}}}\\
+"#,
+                    &m[1..]
+                ));
                 macros.remove(m);
             }
         }
         for e in environments {
-            refined.push_str(&format!(r#"\warning{{possibly bad environment: {}}}\\
-"#, e));
+            refined.push_str(&format!(
+                r#"\warning{{possibly bad environment: {}}}\\
+"#,
+                e
+            ));
         }
         for m in macros {
-            refined.push_str(&format!(r#"\warning{{possibly bad macro: {}}}\\
-"#, &m[1..]));
+            refined.push_str(&format!(
+                r#"\warning{{possibly bad macro: {}}}\\
+"#,
+                &m[1..]
+            ));
         }
         refined.push_str(&latex);
         latex = &refined;
@@ -162,7 +210,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::env::set_current_dir(&dir)?;
             let mut contents = String::new();
             use std::fmt::Write;
-            contents.write_str(r"\documentclass{article}
+            contents.write_str(
+                r"\documentclass{article}
 
 \usepackage{amsmath}
 \usepackage{fullpage}
@@ -173,11 +222,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 \begin{document}
 \title{A single problem}
 \maketitle
-")?;
+",
+            )?;
             contents.write_str(&latex);
-            contents.write_str(r"
+            contents.write_str(
+                r"
 \end{document}
-")?;
+",
+            )?;
             std::fs::write("problem.tex", &contents)?;
             std::process::Command::new("pdflatex")
                 .args(&["problem.tex"])

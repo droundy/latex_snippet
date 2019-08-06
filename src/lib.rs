@@ -18,7 +18,6 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
     }
 }
 
-
 /// Convert some LaTeX into an HTML `String`.
 pub fn html_string(latex: &str) -> String {
     let mut s: Vec<u8> = Vec::with_capacity(latex.len());
@@ -27,7 +26,7 @@ pub fn html_string(latex: &str) -> String {
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(),std::io::Error> {
+pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     let am_alone = finish_paragraph(latex).len() == latex.len();
     loop {
         let p = finish_paragraph(latex);
@@ -48,8 +47,170 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(),std::io
     }
 }
 
+/// Check latex against supported macros
+pub fn check_latex(latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
+    let mut environments: std::collections::HashSet<String> = environments
+        .find_iter(latex)
+        .map(|m| m.as_str().to_string())
+        .collect();
+    // The following are known good environments
+    let good_environments: &[&'static str] = &[
+        "solution",
+        "enumerate",
+        "equation",
+        "equation*",
+        "align",
+        "align*",
+    ];
+    for &e in good_environments {
+        environments.remove(e);
+    }
+    // Unsupported environments.  I'm not actually aware of anything
+    // that we cannot handle or that we will not want to permit.
+    let bad_environments: &[&'static str] = &["buggy"];
+    for &e in bad_environments {
+        if environments.contains(e) {
+            refined.push_str(&format!(
+                r#"\error{{bad environment: {}}}\\
+"#,
+                e
+            ));
+            environments.remove(e);
+        }
+    }
+
+    let macros = regex::Regex::new(r"\\([^0-9_/|><\\$\-+\s\(\)\[\]{}]+)").unwrap();
+    let mut macros: std::collections::HashSet<String> = macros
+        .find_iter(latex)
+        .map(|m| m.as_str().to_string())
+        .collect();
+    // The following is a whitelist of definitely non-problematic
+    // macros.  I'm not sure when if ever we want to enforce only
+    // macros on this whitelist.  For now I'm figuring to warn on
+    // anything outside the list.  Ideally we'd have a list of macros
+    // that pandoc understands and use that, but we also would need a
+    // list of things MathJax understands, since pandoc can effectively
+    // pass along any math symbols without understanding them, so long
+    // as MathJax *does* understand them.
+    let good_macros = &[
+        "begin",
+        "end",
+        "includegraphics",
+        "columnwidth",
+        "noindent",
+        "textwidth",
+        "item",
+        "psi",
+        "Psi",
+        "textit",
+        "\"o",
+        "\"u",
+        "&",
+        "%",
+        "left",
+        "right",
+        "frac",
+        "pm",
+        ";",
+        ",",
+        "text",
+        "it",
+        "em",
+    ];
+    for &m in good_macros {
+        macros.remove(m);
+    }
+    // Unsupported macros.
+    let bad_macros = &[
+        "section",
+        "section*", // could mess up problem set layout
+        "newcommand",
+        "renewcommand",
+        "newenvironment", // have namespacing issues
+        "usepackage",     // big can of worms
+        "def",            // namespacing issues?
+        "cases",          // old cases that doesn't work with amsmath
+    ];
+    for &m in bad_macros {
+        if macros.contains(m) {
+            refined.push_str(&format!(
+                r#"\error{{bad macro: {}}}\\
+"#,
+                &m[1..]
+            ));
+            macros.remove(m);
+        }
+    }
+    for e in environments {
+        refined.push_str(&format!(
+            r#"\warning{{possibly bad environment: {}}}\\
+"#,
+            e
+        ));
+    }
+    for m in macros {
+        refined.push_str(&format!(
+            r#"\warning{{possibly bad macro: {}}}\\
+"#,
+            &m[1..]
+        ));
+    }
+    refined.push_str(&latex);
+    refined
+}
+
+/// Include solutions via \begin{solution}
+pub fn include_solutions(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    loop {
+        if let Some(i) = latex.find(r"\begin{solution}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{solution}".len()..];
+
+            refined.push_str(r"\paragraph*{Solution}{\it ");
+            if let Some(i) = latex.find(r"\end{solution}") {
+                refined.push_str(&latex[..i]);
+                latex = &latex[i + r"\end{solution}".len()..];
+            } else {
+                refined.push_str(latex);
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
+/// Strip out solutions
+pub fn omit_solutions(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out solutions...
+    loop {
+        if let Some(i) = latex.find(r"\begin{solution}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{solution}".len()..];
+            if let Some(i) = latex.find(r"\end{solution}") {
+                latex = &latex[i + r"\end{solution}".len()..];
+            } else {
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(),std::io::Error> {
+pub fn html_paragraph(
+    fmt: &mut impl std::io::Write,
+    mut latex: &str,
+) -> Result<(), std::io::Error> {
     let math_environs = &["{equation}", "{align}"];
     loop {
         if latex.len() == 0 {
@@ -139,14 +300,14 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                         let name = env_name(latex);
                         latex = &latex[name.len()..];
                         if name.chars().last() != Some('}') {
-                            write!(fmt,r#"<span class="error">\begin{}</span>"#, name)?;
+                            write!(fmt, r#"<span class="error">\begin{}</span>"#, name)?;
                         } else if math_environs.contains(&name) {
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
                             if env == "" {
-                                write!(fmt,r#"<span class="error">\begin{}</span>"#, name)?;
+                                write!(fmt, r#"<span class="error">\begin{}</span>"#, name)?;
                             } else {
-                                write!(fmt,r#"\begin{}{}"#, name, env)?;
+                                write!(fmt, r#"\begin{}{}"#, name, env)?;
                             }
                         } else if name == "{itemize}" {
                             fmt.write_all(b"<ul>")?;
@@ -155,7 +316,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                             if li.trim().len() > 0 {
                                 // Nothing should precede the first
                                 // \item except whitespace.
-                                write!(fmt,r#"<span class="error">{}</span>"#, li)?;
+                                write!(fmt, r#"<span class="error">{}</span>"#, li)?;
                             }
                             loop {
                                 let li = finish_item(latex);
@@ -167,14 +328,18 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                                         break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
-                                        fmt.write_all(br#"</ul><span class="error">\end{enumerate}</span>"#)?;
+                                        fmt.write_all(
+                                            br#"</ul><span class="error">\end{enumerate}</span>"#,
+                                        )?;
                                         break;
                                     } else if latex.starts_with(r"\item") {
                                         // It must start with \item
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
                                     } else {
-                                        fmt.write_all(br#"</ul><span class="error">MISSING END</span>"#)?;
+                                        fmt.write_all(
+                                            br#"</ul><span class="error">MISSING END</span>"#,
+                                        )?;
                                         break;
                                     }
                                 } else {
@@ -190,7 +355,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                             if li.trim().len() > 0 {
                                 // Nothing should precede the first
                                 // \item except whitespace.
-                                write!(fmt,r#"<span class="error">{}</span>"#, li)?;
+                                write!(fmt, r#"<span class="error">{}</span>"#, li)?;
                             }
                             loop {
                                 let li = finish_item(latex);
@@ -198,7 +363,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                                 if li.len() == 0 {
                                     if latex.starts_with(r"\end{itemize}") {
                                         latex = &latex[r"\end{itemize}".len()..];
-                                        fmt.write_all(br#"</ol><span class="error">\end{enumerate}</span>"#)?;
+                                        fmt.write_all(
+                                            br#"</ol><span class="error">\end{enumerate}</span>"#,
+                                        )?;
                                         break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
@@ -209,7 +376,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                                         latex = &latex[r"\item".len()..];
                                         latex = finish_standalone_macro(latex);
                                     } else {
-                                        fmt.write_all(br#"</ol><span class="error">MISSING END</span>"#)?;
+                                        fmt.write_all(
+                                            br#"</ol><span class="error">MISSING END</span>"#,
+                                        )?;
                                         break;
                                     }
                                 } else {
@@ -221,14 +390,13 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                         } else {
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
-                            write!(fmt, r#"<span class="error">\begin{}{}</span>"#,
-                                   name, env)?;
+                            write!(fmt, r#"<span class="error">\begin{}{}</span>"#, name, env)?;
                         }
                     }
                     r"\end" => {
                         let name = env_name(latex);
                         latex = &latex[name.len()..];
-                        write!(fmt,r#"<span class="error">\end{}</span>"#, name)?;
+                        write!(fmt, r#"<span class="error">\end{}</span>"#, name)?;
                     }
                     _ => {
                         write!(fmt, r#"<span class="error">{}</span>"#, name)?;
@@ -236,8 +404,8 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                 }
             } else if c == '$' {
                 if let Some(i) = latex[1..].find('$') {
-                    fmt.write_all(latex[..i+2].as_bytes())?;
-                    latex = &latex[i+2..];
+                    fmt.write_all(latex[..i + 2].as_bytes())?;
+                    latex = &latex[i + 2..];
                 } else {
                     fmt.write_all(br#"<span class="error">$</span>"#)?;
                     latex = &latex[1..];
@@ -248,7 +416,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                 if arg == "{" {
                     fmt.write_all(br#"<span class="error">{</span>"#)?;
                 } else {
-                    html(fmt, &arg[1..arg.len()-1])?;
+                    html(fmt, &arg[1..arg.len() - 1])?;
                 }
             }
         } else {
@@ -272,7 +440,7 @@ fn macro_name(latex: &str) -> &str {
         if i == 0 {
             &latex[..2]
         } else {
-            &latex[..i+1]
+            &latex[..i + 1]
         }
     } else {
         latex
@@ -288,9 +456,9 @@ fn test_macro_name() {
 
 fn env_name(latex: &str) -> &str {
     if let Some(i) = latex.find(|c: char| c == '}') {
-        &latex[..i+1]
+        &latex[..i + 1]
     } else if let Some(i) = latex.find(|c: char| c != '{' && !c.is_alphabetic()) {
-        &latex[..i+1]
+        &latex[..i + 1]
     } else {
         latex
     }
@@ -327,18 +495,16 @@ fn finish_paragraph(latex: &str) -> &str {
         let next_paragraph = latex[so_far..].find("\n\n");
         let next_end = latex[so_far..].find(r"\end{");
         let next_begin = latex[so_far..].find(r"\begin{");
-        if earlier(next_paragraph, next_begin)
-            && earlier(next_paragraph, next_end)
-        {
+        if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
             if nestedness == 0 {
                 if let Some(i) = next_paragraph {
                     so_far += i;
-                    while latex.len() > so_far+1
-                        && latex[so_far+1..].chars().next() == Some('\n')
+                    while latex.len() > so_far + 1
+                        && latex[so_far + 1..].chars().next() == Some('\n')
                     {
                         so_far += 1;
                     }
-                    return &latex[..so_far+1]
+                    return &latex[..so_far + 1];
                 } else {
                     // There is no end to this
                     return latex;
@@ -376,7 +542,7 @@ fn finish_item(latex: &str) -> &str {
         let next_begin = begin_list.find(&latex[so_far..]).map(|m| m.start());
         if nestedness == 0 && earlier(next_item, next_begin) && earlier(next_item, next_end) {
             if let Some(i) = next_item {
-                return &latex[..so_far + i]
+                return &latex[..so_far + i];
             } else {
                 // There is no end to this
                 return "";
@@ -411,7 +577,7 @@ fn argument(latex: &str) -> &str {
                 n += 1
             } else if c == '}' {
                 if n == 0 {
-                    return &latex[..arg.len()]
+                    return &latex[..arg.len()];
                 }
                 n -= 1
             }
@@ -439,20 +605,31 @@ fn emph_hello() {
 }
 #[test]
 fn paragraph_test() {
-    assert_eq!("<p><h4>hello</h4>This is good
-</p>", &html_string(r"
+    assert_eq!(
+        "<p><h4>hello</h4>This is good
+</p>",
+        &html_string(
+            r"
 
 \paragraph{hello}
 This is good
-"));
+"
+        )
+    );
 }
 #[test]
 fn hello_it() {
-    assert_eq!("hello good <i>world</i>", &html_string(r"hello {good \it world}"));
+    assert_eq!(
+        "hello good <i>world</i>",
+        &html_string(r"hello {good \it world}")
+    );
 }
 #[test]
 fn inline_math() {
-    assert_eq!(r"hello good $\cos^2x$ math", &html_string(r"hello good $\cos^2x$ math"));
+    assert_eq!(
+        r"hello good $\cos^2x$ math",
+        &html_string(r"hello good $\cos^2x$ math")
+    );
 }
 #[test]
 fn escape_space() {
@@ -465,55 +642,76 @@ fn escape_percent() {
 
 #[test]
 fn line_break() {
-    assert_eq!(r"Hello world<br/>this is a new line",
-               &html_string(r"Hello world\\this is a new line"));
+    assert_eq!(
+        r"Hello world<br/>this is a new line",
+        &html_string(r"Hello world\\this is a new line")
+    );
 }
 
 #[test]
 fn paragraphs() {
-    assert_eq!(r"<p>The first paragraph
+    assert_eq!(
+        r"<p>The first paragraph
 
 </p><p>The second paragraph</p>",
-               &html_string(r"The first paragraph
+        &html_string(
+            r"The first paragraph
 
-The second paragraph"));
+The second paragraph"
+        )
+    );
 }
 
 #[test]
 fn unrecognized_env() {
-    assert_eq!(r#"hello <span class="error">\begin{broken}
+    assert_eq!(
+        r#"hello <span class="error">\begin{broken}
 stuff
-\end{broken}</span>"#, &html_string(r"hello \begin{broken}
+\end{broken}</span>"#,
+        &html_string(
+            r"hello \begin{broken}
 stuff
-\end{broken}"));
+\end{broken}"
+        )
+    );
 }
 #[test]
 fn unrecognized_unbalanced_env() {
-    assert_eq!(r#"hello <span class="error">\begin{broken}</span>
+    assert_eq!(
+        r#"hello <span class="error">\begin{broken}</span>
 stuff
-<span class="error">\end{broke}</span>"#, &html_string(r"hello \begin{broken}
+<span class="error">\end{broke}</span>"#,
+        &html_string(
+            r"hello \begin{broken}
 stuff
-\end{broke}"));
+\end{broke}"
+        )
+    );
 }
 #[test]
 fn equation() {
-    assert_eq!(r"
+    assert_eq!(
+        r"
 \begin{equation}
  y = x^2
 \end{equation}
 some more math
 ",
-               &html_string(r"
+        &html_string(
+            r"
 \begin{equation}
  y = x^2
 \end{equation}
 some more math
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn itemize() {
-    assert_eq!(r"
+    assert_eq!(
+        r"
 <ul><li>Apples
 </li><li>Oranges
 </li><li>Vegetables
@@ -524,7 +722,8 @@ fn itemize() {
 </li></ul>
 some more stuff
 ",
-               &html_string(r"
+        &html_string(
+            r"
 \begin{itemize}
 \item Apples
 \item Oranges
@@ -536,12 +735,15 @@ some more stuff
 \item Pears
 \end{itemize}
 some more stuff
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn enumerate() {
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 <ol><span class="error">
 buggy
 </span><li>Apples
@@ -554,7 +756,8 @@ buggy
 </li></ol>
 some more stuff
 "#,
-               &html_string(r"
+        &html_string(
+            r"
 \begin{enumerate}
 buggy
 \item Apples
@@ -567,20 +770,27 @@ buggy
 \item Pears
 \end{enumerate}
 some more stuff
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn incomplet_begin() {
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 <span class="error">\begin{enum</span>"#,
-               &html_string(r"
-\begin{enum"));
+        &html_string(
+            r"
+\begin{enum"
+        )
+    );
 }
 
 #[test]
 fn incomplet_end() {
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 <ol><span class="error">
 buggy
 </span><li>Apples
@@ -593,7 +803,8 @@ buggy
 <span class="error">\end{enumerate
 </span>some more stuff
 "#,
-               &html_string(r"
+        &html_string(
+            r"
 \begin{enumerate}
 buggy
 \item Apples
@@ -606,12 +817,15 @@ buggy
 \item Pears
 \end{enumerate
 some more stuff
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn incomplet_end_itemize() {
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 <ul><span class="error">
 buggy
 </span><li>Apples
@@ -624,7 +838,8 @@ buggy
 <span class="error">\end{itemize
 </span>some more stuff
 "#,
-               &html_string(r"
+        &html_string(
+            r"
 \begin{itemize}
 buggy
 \item Apples
@@ -637,5 +852,7 @@ buggy
 \item Pears
 \end{itemize
 some more stuff
-"));
+"
+        )
+    );
 }
