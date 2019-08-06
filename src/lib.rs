@@ -83,7 +83,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\warning{</span>"#)?;
                         } else {
-                            fmt.write_all(br#"<span> class="warning">"#)?;
+                            fmt.write_all(br#"<span class="warning">"#)?;
                             html(fmt, arg)?;
                             fmt.write_all(b"</span>")?;
                         }
