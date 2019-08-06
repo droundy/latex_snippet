@@ -10,5 +10,6 @@ edition = "2018"
 
 auto-args = "0.2.2"
 latex_snippet = { path = "..", version = "0.1.9" }
+regex = "1"
 
 [workspace]

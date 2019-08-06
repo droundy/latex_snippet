@@ -77,6 +77,28 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<
                             fmt.write_all(b"</em>")?;
                         }
                     }
+                    r"\warning" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\warning{</span>"#)?;
+                        } else {
+                            fmt.write_all(br#"<span> class="warning">"#)?;
+                            html(fmt, arg)?;
+                            fmt.write_all(b"</span>")?;
+                        }
+                    }
+                    r"\error" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                        } else {
+                            fmt.write_all(br#"<span> class="error">"#)?;
+                            html(fmt, arg)?;
+                            fmt.write_all(b"</span>")?;
+                        }
+                    }
                     r"\paragraph" => {
                         let arg = argument(latex);
                         latex = latex[arg.len()..].trim_start();
