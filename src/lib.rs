@@ -36,7 +36,7 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
-            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            fmt.write_all(br#"<span class="error">\section{</span>"#)?;
         } else {
             fmt.write_all(b"<section><h2>")?;
             html_paragraph(fmt, title)?;
@@ -54,7 +54,7 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
-                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                fmt.write_all(br#"<span class="error">\section{</span>"#)?;
             } else {
                 fmt.write_all(b"<section><h2>")?;
                 html_paragraph(fmt, title)?;
@@ -77,7 +77,7 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
-            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            fmt.write_all(br#"<span class="error">\subsection{</span>"#)?;
         } else {
             fmt.write_all(b"<section><h3>")?;
             html_paragraph(fmt, title)?;
@@ -95,7 +95,7 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
-                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                fmt.write_all(br#"<span class="error">\subsection{</span>"#)?;
             } else {
                 fmt.write_all(b"<section><h3>")?;
                 html_paragraph(fmt, title)?;
@@ -118,7 +118,7 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
-            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            fmt.write_all(br#"<span class="error">\subsubsection{</span>"#)?;
         } else {
             fmt.write_all(b"<section><h4>")?;
             html_paragraph(fmt, title)?;
@@ -136,7 +136,7 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
-                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                fmt.write_all(br#"<span class="error">\subsubsection{</span>"#)?;
             } else {
                 fmt.write_all(b"<section><h4>")?;
                 html_paragraph(fmt, title)?;
@@ -206,6 +206,19 @@ pub fn html_paragraph(
                             fmt.write_all(b"<em>")?;
                             html_subsubsection(fmt, arg)?;
                             fmt.write_all(b"</em>")?;
+                        }
+                    }
+                    r"\includegraphics" => {
+                        let opt = optional_argument(latex);
+                        latex = &latex[opt.len()..];
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<img oops>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</img>")?;
                         }
                     }
                     r"\caption" => {
@@ -570,6 +583,29 @@ fn argument(latex: &str) -> &str {
                     return &latex[..arg.len()];
                 }
                 n -= 1
+            }
+        }
+        // we must have unbalanced parentheses
+        &latex[..1]
+    } else {
+        &latex[..1]
+    }
+}
+
+fn optional_argument(latex: &str) -> &str {
+    if latex.len() == 0 {
+        ""
+    } else if latex.chars().next().unwrap() == '[' {
+        let mut n: isize = 0;
+        let mut arg = String::from("[");
+        for c in latex[1..].chars() {
+            arg.push(c);
+            if c == '{' {
+                n += 1
+            } else if c == '}' {
+                n -= 1
+            } else if c == ']' && n == 0 {
+                return &latex[..arg.len()];
             }
         }
         // we must have unbalanced parentheses
