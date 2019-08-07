@@ -29,7 +29,7 @@ pub fn html_string(latex: &str) -> String {
 pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if let Some(i) = latex.find(r"\section") {
         html_section(fmt, &latex[..i])?;
-        latex = &latex[i..];
+        latex = &latex[i + r"\section".len()..];
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
@@ -47,7 +47,7 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
         if let Some(i) = latex.find(r"\section") {
             html_section(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
-            latex = &latex[i..];
+            latex = &latex[i + r"\section".len()..];
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
@@ -70,15 +70,15 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
 pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if let Some(i) = latex.find(r"\subsection") {
         html_subsection(fmt, &latex[..i])?;
-        latex = &latex[i..];
+        latex = &latex[i + r"\subsection".len()..];
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
         } else {
-            fmt.write_all(b"<section><h2>")?;
+            fmt.write_all(b"<section><h3>")?;
             html_paragraph(fmt, title)?;
-            fmt.write_all(b"</h2>")?;
+            fmt.write_all(b"</h3>")?;
         }
     } else {
         html_subsection(fmt, latex)?;
@@ -88,15 +88,15 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
         if let Some(i) = latex.find(r"\subsection") {
             html_subsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
-            latex = &latex[i..];
+            latex = &latex[i + r"\subsection".len()..];
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
                 fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
             } else {
-                fmt.write_all(b"<section><h2>")?;
+                fmt.write_all(b"<section><h3>")?;
                 html_paragraph(fmt, title)?;
-                fmt.write_all(b"</h2>")?;
+                fmt.write_all(b"</h3>")?;
             }
         } else {
             html_subsection(fmt, latex)?;
@@ -111,15 +111,15 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
 pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if let Some(i) = latex.find(r"\subsubsection") {
         html_subsubsection(fmt, &latex[..i])?;
-        latex = &latex[i..];
+        latex = &latex[i + r"\subsubsection".len()..];
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
         } else {
-            fmt.write_all(b"<section><h3>")?;
+            fmt.write_all(b"<section><h4>")?;
             html_paragraph(fmt, title)?;
-            fmt.write_all(b"</h3>")?;
+            fmt.write_all(b"</h4>")?;
         }
     } else {
         html_subsubsection(fmt, latex)?;
@@ -129,15 +129,15 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
         if let Some(i) = latex.find(r"\subsubsection") {
             html_subsubsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
-            latex = &latex[i..];
+            latex = &latex[i + r"\subsubsection".len()..];
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
                 fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
             } else {
-                fmt.write_all(b"<section><h3>")?;
+                fmt.write_all(b"<section><h4>")?;
                 html_paragraph(fmt, title)?;
-                fmt.write_all(b"</h3>")?;
+                fmt.write_all(b"</h4>")?;
             }
         } else {
             html_subsubsection(fmt, latex)?;
@@ -233,9 +233,9 @@ pub fn html_paragraph(
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
                         } else {
-                            fmt.write_all(b"<h4>")?;
+                            fmt.write_all(b"<h5>")?;
                             html(fmt, arg)?;
-                            fmt.write_all(b"</h4>")?;
+                            fmt.write_all(b"</h5>")?;
                         }
                     }
                     r"\it" => {
@@ -593,6 +593,92 @@ fn test_argument() {
 }
 
 #[test]
+fn test_section() {
+    assert_eq!("xx
+<section><h2>foo</h2>
+bar
+</section><section><h2>baz</h2>
+baz
+</section>",
+               &html_string(r"xx
+\section{foo}
+bar
+\section{baz}
+baz
+"));
+}
+
+#[test]
+fn test_subsection() {
+    assert_eq!("xx
+<section><h3>foo</h3>
+bar
+</section><section><h3>baz</h3>
+baz
+</section>",
+               &html_string(r"xx
+\subsection{foo}
+bar
+\subsection{baz}
+baz
+"));
+
+    assert_eq!("xx
+<section><h3>foo</h3>
+bar
+<section><h4>baz</h4>
+baz
+</section></section>",
+               &html_string(r"xx
+\subsection{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+
+    assert_eq!("xx
+<section><h2>foo</h2>
+bar
+<section><h4>baz</h4>
+baz
+</section></section>",
+               &html_string(r"xx
+\section{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+}
+
+#[test]
+fn test_subsubsection() {
+    assert_eq!("xx
+<section><h4>foo</h4>
+bar
+</section><section><h4>baz</h4>
+baz
+</section>",
+               &html_string(r"xx
+\subsubsection{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+    assert_eq!("xx
+<section><h4>foo</h4>
+bar
+</section><section><h3>baz</h3>
+baz
+</section>",
+               &html_string(r"xx
+\subsubsection{foo}
+bar
+\subsection{baz}
+baz
+"));
+}
+
+#[test]
 fn hello_world() {
     assert_eq!("hello world", &html_string("hello world"));
 }
@@ -603,7 +689,7 @@ fn emph_hello() {
 #[test]
 fn paragraph_test() {
     assert_eq!(
-        "<p><h4>hello</h4>This is good
+        "<p><h5>hello</h5>This is good
 </p>",
         &html_string(
             r"
