@@ -1,0 +1,356 @@
+use super::*;
+
+#[test]
+fn test_section() {
+    assert_eq!("xx
+<section><h2>foo</h2>
+bar
+</section><section><h2>baz</h2>
+baz
+</section>",
+               &html_string(r"xx
+\section{foo}
+bar
+\section{baz}
+baz
+"));
+}
+
+#[test]
+fn test_subsection() {
+    assert_eq!("xx
+<section><h3>foo</h3>
+bar
+</section><section><h3>baz</h3>
+baz
+</section>",
+               &html_string(r"xx
+\subsection{foo}
+bar
+\subsection{baz}
+baz
+"));
+
+    assert_eq!("xx
+<section><h3>foo</h3>
+bar
+<section><h4>baz</h4>
+baz
+</section></section>",
+               &html_string(r"xx
+\subsection{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+
+    assert_eq!("xx
+<section><h2>foo</h2>
+bar
+<section><h4>baz</h4>
+baz
+</section></section>",
+               &html_string(r"xx
+\section{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+}
+
+#[test]
+fn test_subsubsection() {
+    assert_eq!("xx
+<section><h4>foo</h4>
+bar
+</section><section><h4>baz</h4>
+baz
+</section>",
+               &html_string(r"xx
+\subsubsection{foo}
+bar
+\subsubsection{baz}
+baz
+"));
+    assert_eq!("xx
+<section><h4>foo</h4>
+bar
+</section><section><h3>baz</h3>
+baz
+</section>",
+               &html_string(r"xx
+\subsubsection{foo}
+bar
+\subsection{baz}
+baz
+"));
+}
+
+#[test]
+fn figure() {
+    assert_eq!("hello world", &html_string("hello world"));
+}
+
+#[test]
+fn hello_world() {
+    assert_eq!("hello world", &html_string("hello world"));
+}
+#[test]
+fn emph_hello() {
+    assert_eq!("<em>hello</em>", &html_string(r"\emph{hello}"));
+}
+#[test]
+fn paragraph_test() {
+    assert_eq!(
+        "<p><h5>hello</h5>This is good
+</p>",
+        &html_string(
+            r"
+
+\paragraph{hello}
+This is good
+"
+        )
+    );
+}
+#[test]
+fn hello_it() {
+    assert_eq!(
+        "hello good <i>world</i>",
+        &html_string(r"hello {good \it world}")
+    );
+}
+#[test]
+fn inline_math() {
+    assert_eq!(
+        r"hello good $\cos^2x$ math",
+        &html_string(r"hello good $\cos^2x$ math")
+    );
+}
+#[test]
+fn escape_space() {
+    assert_eq!(r"hello<i> world</i>", &html_string(r"hello\it\ world"));
+}
+#[test]
+fn escape_percent() {
+    assert_eq!(r"50% full", &html_string(r"50\% full"));
+}
+
+#[test]
+fn line_break() {
+    assert_eq!(
+        r"Hello world<br/>this is a new line",
+        &html_string(r"Hello world\\this is a new line")
+    );
+}
+
+#[test]
+fn paragraphs() {
+    assert_eq!(
+        r"<p>The first paragraph
+
+</p><p>The second paragraph</p>",
+        &html_string(
+            r"The first paragraph
+
+The second paragraph"
+        )
+    );
+}
+
+#[test]
+fn unrecognized_env() {
+    assert_eq!(
+        r#"hello <span class="error">\begin{broken}
+stuff
+\end{broken}</span>"#,
+        &html_string(
+            r"hello \begin{broken}
+stuff
+\end{broken}"
+        )
+    );
+}
+#[test]
+fn unrecognized_unbalanced_env() {
+    assert_eq!(
+        r#"hello <span class="error">\begin{broken}</span>
+stuff
+<span class="error">\end{broke}</span>"#,
+        &html_string(
+            r"hello \begin{broken}
+stuff
+\end{broke}"
+        )
+    );
+}
+#[test]
+fn equation() {
+    assert_eq!(
+        r"
+\begin{equation}
+ y = x^2
+\end{equation}
+some more math
+",
+        &html_string(
+            r"
+\begin{equation}
+ y = x^2
+\end{equation}
+some more math
+"
+        )
+    );
+}
+
+#[test]
+fn itemize() {
+    assert_eq!(
+        r"
+<ul><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li><li>Pears
+</li></ul>
+some more stuff
+",
+        &html_string(
+            r"
+\begin{itemize}
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{itemize}
+some more stuff
+"
+        )
+    );
+}
+
+#[test]
+fn enumerate() {
+    assert_eq!(
+        r#"
+<ol><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li><li>Pears
+</li></ol>
+some more stuff
+"#,
+        &html_string(
+            r"
+\begin{enumerate}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{enumerate}
+some more stuff
+"
+        )
+    );
+}
+
+#[test]
+fn incomplet_begin() {
+    assert_eq!(
+        r#"
+<span class="error">\begin{enum</span>"#,
+        &html_string(
+            r"
+\begin{enum"
+        )
+    );
+}
+
+#[test]
+fn incomplet_end() {
+    assert_eq!(
+        r#"
+<ol><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li></ol><span class="error">MISSING END</span>Pears
+<span class="error">\end{enumerate
+</span>some more stuff
+"#,
+        &html_string(
+            r"
+\begin{enumerate}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{enumerate
+some more stuff
+"
+        )
+    );
+}
+
+#[test]
+fn incomplet_end_itemize() {
+    assert_eq!(
+        r#"
+<ul><span class="error">
+buggy
+</span><li>Apples
+</li><li>Oranges
+</li><li>Vegetables
+<ul><li>Carrots
+</li><li>Potatotes
+</li></ul>
+</li></ul><span class="error">MISSING END</span>Pears
+<span class="error">\end{itemize
+</span>some more stuff
+"#,
+        &html_string(
+            r"
+\begin{itemize}
+buggy
+\item Apples
+\item Oranges
+\item Vegetables
+\begin{itemize}
+\item Carrots
+\item Potatotes
+\end{itemize}
+\item Pears
+\end{itemize
+some more stuff
+"
+        )
+    );
+}
+
+
