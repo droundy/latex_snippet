@@ -27,6 +27,129 @@ pub fn html_string(latex: &str) -> String {
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    if let Some(i) = latex.find(r"\section") {
+        html_section(fmt, &latex[..i])?;
+        latex = &latex[i..];
+        let title = argument(latex);
+        latex = &latex[title.len()..];
+        if title == "{" {
+            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+        } else {
+            fmt.write_all(b"<section><h2>")?;
+            html_paragraph(fmt, title)?;
+            fmt.write_all(b"</h2>")?;
+        }
+    } else {
+        html_section(fmt, latex)?;
+        latex = "";
+    }
+    while latex.len() > 0 {
+        if let Some(i) = latex.find(r"\section") {
+            html_section(fmt, &latex[..i])?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = &latex[i..];
+            let title = argument(latex);
+            latex = &latex[title.len()..];
+            if title == "{" {
+                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            } else {
+                fmt.write_all(b"<section><h2>")?;
+                html_paragraph(fmt, title)?;
+                fmt.write_all(b"</h2>")?;
+            }
+        } else {
+            html_section(fmt, latex)?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = "";
+        }
+    }
+    Ok(())
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
+pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    if let Some(i) = latex.find(r"\subsection") {
+        html_subsection(fmt, &latex[..i])?;
+        latex = &latex[i..];
+        let title = argument(latex);
+        latex = &latex[title.len()..];
+        if title == "{" {
+            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+        } else {
+            fmt.write_all(b"<section><h2>")?;
+            html_paragraph(fmt, title)?;
+            fmt.write_all(b"</h2>")?;
+        }
+    } else {
+        html_subsection(fmt, latex)?;
+        latex = "";
+    }
+    while latex.len() > 0 {
+        if let Some(i) = latex.find(r"\subsection") {
+            html_subsection(fmt, &latex[..i])?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = &latex[i..];
+            let title = argument(latex);
+            latex = &latex[title.len()..];
+            if title == "{" {
+                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            } else {
+                fmt.write_all(b"<section><h2>")?;
+                html_paragraph(fmt, title)?;
+                fmt.write_all(b"</h2>")?;
+            }
+        } else {
+            html_subsection(fmt, latex)?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = "";
+        }
+    }
+    Ok(())
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
+pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    if let Some(i) = latex.find(r"\subsubsection") {
+        html_subsubsection(fmt, &latex[..i])?;
+        latex = &latex[i..];
+        let title = argument(latex);
+        latex = &latex[title.len()..];
+        if title == "{" {
+            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+        } else {
+            fmt.write_all(b"<section><h3>")?;
+            html_paragraph(fmt, title)?;
+            fmt.write_all(b"</h3>")?;
+        }
+    } else {
+        html_subsubsection(fmt, latex)?;
+        latex = "";
+    }
+    while latex.len() > 0 {
+        if let Some(i) = latex.find(r"\subsubsection") {
+            html_subsubsection(fmt, &latex[..i])?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = &latex[i..];
+            let title = argument(latex);
+            latex = &latex[title.len()..];
+            if title == "{" {
+                fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+            } else {
+                fmt.write_all(b"<section><h3>")?;
+                html_paragraph(fmt, title)?;
+                fmt.write_all(b"</h3>")?;
+            }
+        } else {
+            html_subsubsection(fmt, latex)?;
+            fmt.write_all(b"</section>")?; // We finished a section.
+            latex = "";
+        }
+    }
+    Ok(())
+}
+
+/// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
+pub fn html_subsubsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     let am_alone = finish_paragraph(latex).len() == latex.len();
     loop {
         let p = finish_paragraph(latex);
@@ -752,6 +875,7 @@ pub fn check_latex(latex: &str) -> String {
     // pass along any math symbols without understanding them, so long
     // as MathJax *does* understand them.
     let good_macros = &[
+        "section", "subsection", "subsubsection",
         r"begin", r"end", r"includegraphics", r"columnwidth",
         "emph", "paragraph", r"noindent", "textwidth", r"item",
         r"psi", r"Psi",
@@ -766,14 +890,12 @@ pub fn check_latex(latex: &str) -> String {
     }
     // Unsupported macros.
     let bad_macros = &[
-        r"\section",
-        r"\section*", // could mess up problem set layout
-        r"\newcommand",
-        r"\renewcommand",
-        r"\newenvironment", // have namespacing issues
-        r"\usepackage",     // big can of worms
-        r"\def",            // namespacing issues?
-        r"\cases",          // old cases that doesn't work with amsmath
+        "newcommand",
+        "renewcommand",
+        "newenvironment", // have namespacing issues
+        "usepackage",     // big can of worms
+        "def",            // namespacing issues?
+        "cases",          // old cases that doesn't work with amsmath
     ];
     for &m in bad_macros {
         if macros.contains(m) {
