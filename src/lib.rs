@@ -52,8 +52,8 @@ pub fn check_latex(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
     let mut environments: std::collections::HashSet<String> = environments
-        .find_iter(latex)
-        .map(|m| m.as_str().to_string())
+        .captures_iter(latex)
+        .map(|m| m[1].to_string())
         .collect();
     // The following are known good environments
     let good_environments: &[&'static str] = &[
@@ -83,8 +83,8 @@ pub fn check_latex(latex: &str) -> String {
 
     let macros = regex::Regex::new(r"\\([^0-9_/|><\\$\-+\s\(\)\[\]{}]+)").unwrap();
     let mut macros: std::collections::HashSet<String> = macros
-        .find_iter(latex)
-        .map(|m| m.as_str().to_string())
+        .captures_iter(latex)
+        .map(|m| m[1].to_string())
         .collect();
     // The following is a whitelist of definitely non-problematic
     // macros.  I'm not sure when if ever we want to enforce only
@@ -95,51 +95,34 @@ pub fn check_latex(latex: &str) -> String {
     // pass along any math symbols without understanding them, so long
     // as MathJax *does* understand them.
     let good_macros = &[
-        "begin",
-        "end",
-        "includegraphics",
-        "columnwidth",
-        "noindent",
-        "textwidth",
-        "item",
-        "psi",
-        "Psi",
-        "textit",
-        "\"o",
-        "\"u",
-        "&",
-        "%",
-        "left",
-        "right",
-        "frac",
-        "pm",
-        ";",
-        ",",
-        "text",
-        "it",
-        "em",
+        r"begin", r"end", r"includegraphics", r"columnwidth",
+        "emph", "paragraph", r"noindent", "textwidth", r"item",
+        r"psi", r"Psi",
+        r#""o"#, r#""u"#, r"&", r"%",
+        r"left", r"right", r"frac",
+        r"pm", r";", r",",
+        r"text", "textit", "textrm", r"it", r"em",
+        r"textbackslash",
     ];
     for &m in good_macros {
         macros.remove(m);
     }
     // Unsupported macros.
     let bad_macros = &[
-        "section",
-        "section*", // could mess up problem set layout
-        "newcommand",
-        "renewcommand",
-        "newenvironment", // have namespacing issues
-        "usepackage",     // big can of worms
-        "def",            // namespacing issues?
-        "cases",          // old cases that doesn't work with amsmath
+        r"\section",
+        r"\section*", // could mess up problem set layout
+        r"\newcommand",
+        r"\renewcommand",
+        r"\newenvironment", // have namespacing issues
+        r"\usepackage",     // big can of worms
+        r"\def",            // namespacing issues?
+        r"\cases",          // old cases that doesn't work with amsmath
     ];
     for &m in bad_macros {
         if macros.contains(m) {
             refined.push_str(&format!(
-                r#"\error{{bad macro: {}}}\\
-"#,
-                &m[1..]
-            ));
+                r#"\error{{bad macro: \textbackslash{{}}{}}}\\
+"#, m));
             macros.remove(m);
         }
     }
@@ -152,9 +135,8 @@ pub fn check_latex(latex: &str) -> String {
     }
     for m in macros {
         refined.push_str(&format!(
-            r#"\warning{{possibly bad macro: {}}}\\
-"#,
-            &m[1..]
+            r#"\warning{{possibly bad macro: \textbackslash{{}}{}}}\\
+"#, m
         ));
     }
     refined.push_str(&latex);
@@ -226,6 +208,9 @@ pub fn html_paragraph(
                 match name {
                     r"\\" => {
                         fmt.write_all(b"<br/>")?;
+                    }
+                    r"\textbackslash" => {
+                        fmt.write_all(b"\\")?;
                     }
                     r"\emph" => {
                         let arg = argument(latex);
