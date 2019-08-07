@@ -30,7 +30,7 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
     if let Some(i) = latex.find(r"\section") {
         html_section(fmt, &latex[..i])?;
         latex = &latex[i..];
-        let title = argument(latex);
+        let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -48,7 +48,7 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
             html_section(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i..];
-            let title = argument(latex);
+            let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
                 fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -71,7 +71,7 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
     if let Some(i) = latex.find(r"\subsection") {
         html_subsection(fmt, &latex[..i])?;
         latex = &latex[i..];
-        let title = argument(latex);
+        let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -89,7 +89,7 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
             html_subsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i..];
-            let title = argument(latex);
+            let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
                 fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -112,7 +112,7 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
     if let Some(i) = latex.find(r"\subsubsection") {
         html_subsubsection(fmt, &latex[..i])?;
         latex = &latex[i..];
-        let title = argument(latex);
+        let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -130,7 +130,7 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
             html_subsubsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i..];
-            let title = argument(latex);
+            let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
                 fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -228,7 +228,7 @@ pub fn html_paragraph(
                         }
                     }
                     r"\paragraph" => {
-                        let arg = argument(latex);
+                        let arg = parse_title(latex);
                         latex = latex[arg.len()..].trim_start();
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
@@ -534,6 +534,36 @@ fn argument(latex: &str) -> &str {
     if latex.len() == 0 {
         ""
     } else if latex.chars().next().unwrap().is_digit(10) {
+        &latex[..1]
+    } else if latex.chars().next().unwrap() == '{' {
+        let mut n = 0;
+        let mut arg = String::from("{");
+        for c in latex[1..].chars() {
+            arg.push(c);
+            if c == '{' {
+                n += 1
+            } else if c == '}' {
+                if n == 0 {
+                    return &latex[..arg.len()];
+                }
+                n -= 1
+            }
+        }
+        // we must have unbalanced parentheses
+        &latex[..1]
+    } else {
+        &latex[..1]
+    }
+}
+
+fn parse_title(mut latex: &str) -> &str {
+    if latex.len() == 0 {
+        return ""
+    }
+    if latex.chars().next().unwrap() == '*' {
+        latex = &latex[1..]; // just ignore a *
+    }
+    if latex.chars().next().unwrap().is_digit(10) {
         &latex[..1]
     } else if latex.chars().next().unwrap() == '{' {
         let mut n = 0;
@@ -876,6 +906,7 @@ pub fn check_latex(latex: &str) -> String {
     // as MathJax *does* understand them.
     let good_macros = &[
         "section", "subsection", "subsubsection",
+        "section*", "subsection*", "subsubsection*",
         r"begin", r"end", r"includegraphics", r"columnwidth",
         "emph", "paragraph", r"noindent", "textwidth", r"item",
         r"psi", r"Psi",
