@@ -92,6 +92,11 @@ fn figure() {
 }
 
 #[test]
+fn figure_with_caption() {
+    assert_eq!("hello<figure>foo<figcaption>hello</figcaption></figure>", &html_string(r"hello\begin{figure}foo\caption{hello}\end{figure}"));
+}
+
+#[test]
 fn hello_world() {
     assert_eq!("hello world", &html_string("hello world"));
 }

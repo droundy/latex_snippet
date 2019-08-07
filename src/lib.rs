@@ -204,8 +204,19 @@ pub fn html_paragraph(
                             fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
                         } else {
                             fmt.write_all(b"<em>")?;
-                            html(fmt, arg)?;
+                            html_subsubsection(fmt, arg)?;
                             fmt.write_all(b"</em>")?;
+                        }
+                    }
+                    r"\caption" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\caption{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<figcaption>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</figcaption>")?;
                         }
                     }
                     r"\warning" => {
