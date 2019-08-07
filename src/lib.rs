@@ -47,147 +47,6 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
     }
 }
 
-/// Check latex against supported macros
-pub fn check_latex(latex: &str) -> String {
-    let mut refined = String::with_capacity(latex.len());
-    let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
-    let mut environments: std::collections::HashSet<String> = environments
-        .captures_iter(latex)
-        .map(|m| m[1].to_string())
-        .collect();
-    // The following are known good environments
-    let good_environments: &[&'static str] = &[
-        "solution",
-        "enumerate",
-        "equation",
-        "equation*",
-        "align",
-        "align*",
-    ];
-    for &e in good_environments {
-        environments.remove(e);
-    }
-    // Unsupported environments.  I'm not actually aware of anything
-    // that we cannot handle or that we will not want to permit.
-    let bad_environments: &[&'static str] = &["buggy"];
-    for &e in bad_environments {
-        if environments.contains(e) {
-            refined.push_str(&format!(
-                r#"\error{{bad environment: {}}}\\
-"#,
-                e
-            ));
-            environments.remove(e);
-        }
-    }
-
-    let macros = regex::Regex::new(r"\\([^0-9_/|><\\$\-+\s\(\)\[\]{}]+)").unwrap();
-    let mut macros: std::collections::HashSet<String> = macros
-        .captures_iter(latex)
-        .map(|m| m[1].to_string())
-        .collect();
-    // The following is a whitelist of definitely non-problematic
-    // macros.  I'm not sure when if ever we want to enforce only
-    // macros on this whitelist.  For now I'm figuring to warn on
-    // anything outside the list.  Ideally we'd have a list of macros
-    // that pandoc understands and use that, but we also would need a
-    // list of things MathJax understands, since pandoc can effectively
-    // pass along any math symbols without understanding them, so long
-    // as MathJax *does* understand them.
-    let good_macros = &[
-        r"begin", r"end", r"includegraphics", r"columnwidth",
-        "emph", "paragraph", r"noindent", "textwidth", r"item",
-        r"psi", r"Psi",
-        r#""o"#, r#""u"#, r"&", r"%",
-        r"left", r"right", r"frac",
-        r"pm", r";", r",",
-        r"text", "textit", "textrm", r"it", r"em",
-        r"textbackslash",
-    ];
-    for &m in good_macros {
-        macros.remove(m);
-    }
-    // Unsupported macros.
-    let bad_macros = &[
-        r"\section",
-        r"\section*", // could mess up problem set layout
-        r"\newcommand",
-        r"\renewcommand",
-        r"\newenvironment", // have namespacing issues
-        r"\usepackage",     // big can of worms
-        r"\def",            // namespacing issues?
-        r"\cases",          // old cases that doesn't work with amsmath
-    ];
-    for &m in bad_macros {
-        if macros.contains(m) {
-            refined.push_str(&format!(
-                r#"\error{{bad macro: \textbackslash{{}}{}}}\\
-"#, m));
-            macros.remove(m);
-        }
-    }
-    for e in environments {
-        refined.push_str(&format!(
-            r#"\warning{{possibly bad environment: {}}}\\
-"#,
-            e
-        ));
-    }
-    for m in macros {
-        refined.push_str(&format!(
-            r#"\warning{{possibly bad macro: \textbackslash{{}}{}}}\\
-"#, m
-        ));
-    }
-    refined.push_str(&latex);
-    refined
-}
-
-/// Include solutions via \begin{solution}
-pub fn include_solutions(mut latex: &str) -> String {
-    let mut refined = String::with_capacity(latex.len());
-    loop {
-        if let Some(i) = latex.find(r"\begin{solution}") {
-            refined.push_str(&latex[..i]);
-            latex = &latex[i + r"\begin{solution}".len()..];
-
-            refined.push_str(r"\paragraph*{Solution}{\it ");
-            if let Some(i) = latex.find(r"\end{solution}") {
-                refined.push_str(&latex[..i]);
-                latex = &latex[i + r"\end{solution}".len()..];
-            } else {
-                refined.push_str(latex);
-                break;
-            }
-        } else {
-            refined.push_str(latex);
-            break;
-        }
-    }
-    refined
-}
-
-/// Strip out solutions
-pub fn omit_solutions(mut latex: &str) -> String {
-    let mut refined = String::with_capacity(latex.len());
-    // need to strip out solutions...
-    loop {
-        if let Some(i) = latex.find(r"\begin{solution}") {
-            refined.push_str(&latex[..i]);
-            latex = &latex[i + r"\begin{solution}".len()..];
-            if let Some(i) = latex.find(r"\end{solution}") {
-                latex = &latex[i + r"\end{solution}".len()..];
-            } else {
-                break;
-            }
-        } else {
-            refined.push_str(latex);
-            break;
-        }
-    }
-    refined
-}
-
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html_paragraph(
     fmt: &mut impl std::io::Write,
@@ -840,4 +699,148 @@ some more stuff
 "
         )
     );
+}
+
+
+
+
+/// Check latex against supported macros
+pub fn check_latex(latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
+    let mut environments: std::collections::HashSet<String> = environments
+        .captures_iter(latex)
+        .map(|m| m[1].to_string())
+        .collect();
+    // The following are known good environments
+    let good_environments: &[&'static str] = &[
+        "solution",
+        "enumerate",
+        "equation",
+        "equation*",
+        "align",
+        "align*",
+    ];
+    for &e in good_environments {
+        environments.remove(e);
+    }
+    // Unsupported environments.  I'm not actually aware of anything
+    // that we cannot handle or that we will not want to permit.
+    let bad_environments: &[&'static str] = &["buggy"];
+    for &e in bad_environments {
+        if environments.contains(e) {
+            refined.push_str(&format!(
+                r#"\error{{bad environment: {}}}\\
+"#,
+                e
+            ));
+            environments.remove(e);
+        }
+    }
+
+    let macros = regex::Regex::new(r"\\([^0-9_/|><\\$\-+\s\(\)\[\]{}]+)").unwrap();
+    let mut macros: std::collections::HashSet<String> = macros
+        .captures_iter(latex)
+        .map(|m| m[1].to_string())
+        .collect();
+    // The following is a whitelist of definitely non-problematic
+    // macros.  I'm not sure when if ever we want to enforce only
+    // macros on this whitelist.  For now I'm figuring to warn on
+    // anything outside the list.  Ideally we'd have a list of macros
+    // that pandoc understands and use that, but we also would need a
+    // list of things MathJax understands, since pandoc can effectively
+    // pass along any math symbols without understanding them, so long
+    // as MathJax *does* understand them.
+    let good_macros = &[
+        r"begin", r"end", r"includegraphics", r"columnwidth",
+        "emph", "paragraph", r"noindent", "textwidth", r"item",
+        r"psi", r"Psi",
+        r#""o"#, r#""u"#, r"&", r"%",
+        r"left", r"right", r"frac",
+        r"pm", r";", r",",
+        r"text", "textit", "textrm", r"it", r"em",
+        r"textbackslash",
+    ];
+    for &m in good_macros {
+        macros.remove(m);
+    }
+    // Unsupported macros.
+    let bad_macros = &[
+        r"\section",
+        r"\section*", // could mess up problem set layout
+        r"\newcommand",
+        r"\renewcommand",
+        r"\newenvironment", // have namespacing issues
+        r"\usepackage",     // big can of worms
+        r"\def",            // namespacing issues?
+        r"\cases",          // old cases that doesn't work with amsmath
+    ];
+    for &m in bad_macros {
+        if macros.contains(m) {
+            refined.push_str(&format!(
+                r#"\error{{bad macro: \textbackslash{{}}{}}}\\
+"#, m));
+            macros.remove(m);
+        }
+    }
+    for e in environments {
+        refined.push_str(&format!(
+            r#"\warning{{possibly bad environment: {}}}\\
+"#,
+            e
+        ));
+    }
+    for m in macros {
+        refined.push_str(&format!(
+            r#"\warning{{possibly bad macro: \textbackslash{{}}{}}}\\
+"#, m
+        ));
+    }
+    refined.push_str(&latex);
+    refined
+}
+
+/// Include solutions via \begin{solution}
+pub fn include_solutions(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    loop {
+        if let Some(i) = latex.find(r"\begin{solution}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{solution}".len()..];
+
+            refined.push_str(r"\paragraph*{Solution}{\it ");
+            if let Some(i) = latex.find(r"\end{solution}") {
+                refined.push_str(&latex[..i]);
+                latex = &latex[i + r"\end{solution}".len()..];
+            } else {
+                refined.push_str(latex);
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
+/// Strip out solutions
+pub fn omit_solutions(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out solutions...
+    loop {
+        if let Some(i) = latex.find(r"\begin{solution}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{solution}".len()..];
+            if let Some(i) = latex.find(r"\end{solution}") {
+                latex = &latex[i + r"\end{solution}".len()..];
+            } else {
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
 }
