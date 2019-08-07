@@ -874,13 +874,13 @@ pub fn check_latex(latex: &str) -> String {
         "align",
         "align*",
     ];
-    for &e in good_environments {
+    for &e in good_environments.iter() {
         environments.remove(e);
     }
     // Unsupported environments.  I'm not actually aware of anything
     // that we cannot handle or that we will not want to permit.
     let bad_environments: &[&'static str] = &["buggy"];
-    for &e in bad_environments {
+    for &e in bad_environments.iter() {
         if environments.contains(e) {
             refined.push_str(&format!(
                 r#"\error{{bad environment: {}}}\\
@@ -916,7 +916,7 @@ pub fn check_latex(latex: &str) -> String {
         r"text", "textit", "textrm", r"it", r"em",
         r"textbackslash",
     ];
-    for &m in good_macros {
+    for &m in good_macros.iter() {
         macros.remove(m);
     }
     // Unsupported macros.
@@ -928,7 +928,7 @@ pub fn check_latex(latex: &str) -> String {
         "def",            // namespacing issues?
         "cases",          // old cases that doesn't work with amsmath
     ];
-    for &m in bad_macros {
+    for &m in bad_macros.iter() {
         if macros.contains(m) {
             refined.push_str(&format!(
                 r#"\error{{bad macro: \textbackslash{{}}{}}}\\
