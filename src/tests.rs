@@ -88,7 +88,7 @@ baz
 
 #[test]
 fn figure() {
-    assert_eq!("hello world", &html_string("hello world"));
+    assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}foo\end{figure}"));
 }
 
 #[test]

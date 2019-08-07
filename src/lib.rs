@@ -271,6 +271,15 @@ pub fn html_paragraph(
                         latex = &latex[name.len()..];
                         if name.chars().last() != Some('}') {
                             write!(fmt, r#"<span class="error">\begin{}</span>"#, name)?;
+                        } else if name == "{figure}" {
+                            if let Some(i) = latex.find(r"\end{figure}") {
+                                fmt.write_all(b"<figure>")?;
+                                html_paragraph(fmt, &latex[..i])?;
+                                fmt.write_all(b"</figure>")?;
+                                latex = &latex[i+br"\end{figure}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
+                            }
                         } else if math_environs.contains(&name) {
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
