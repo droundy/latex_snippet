@@ -87,6 +87,11 @@ baz
 }
 
 #[test]
+fn includegraphics() {
+    assert_eq!(r#"hello<img src="filename"/>foo"#, &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo"));
+}
+
+#[test]
 fn figure() {
     assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}foo\end{figure}"));
 }

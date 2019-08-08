@@ -216,9 +216,7 @@ pub fn html_paragraph(
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
                         } else {
-                            fmt.write_all(b"<img oops>")?;
-                            html_subsubsection(fmt, arg)?;
-                            fmt.write_all(b"</img>")?;
+                            write!(fmt, r#"<img src="{}"/>"#, &arg[1..arg.len()-1])?;
                         }
                     }
                     r"\caption" => {
