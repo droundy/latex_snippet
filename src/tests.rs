@@ -87,6 +87,31 @@ baz
 }
 
 #[test]
+fn includesolutions() {
+    assert_eq!(r#"
+hello
+\paragraph*{Solution}{\it 
+the solution is here
+}
+foo"#, &include_solutions(r"
+hello
+\begin{solution}
+the solution is here
+\end{solution}
+foo"));
+
+    assert_eq!(r#"
+hello
+\paragraph*{Solution}{\it 
+the solution is here
+}"#, &include_solutions(r"
+hello
+\begin{solution}
+the solution is here
+\end{solution}"));
+}
+
+#[test]
 fn includegraphics() {
     assert_eq!(r#"hello<img src="filename"/>foo"#, &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo"));
 }

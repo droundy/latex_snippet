@@ -757,9 +757,11 @@ pub fn include_solutions(mut latex: &str) -> String {
             refined.push_str(r"\paragraph*{Solution}{\it ");
             if let Some(i) = latex.find(r"\end{solution}") {
                 refined.push_str(&latex[..i]);
+                refined.push_str("}");
                 latex = &latex[i + r"\end{solution}".len()..];
             } else {
                 refined.push_str(latex);
+                refined.push_str("}");
                 break;
             }
         } else {
