@@ -172,6 +172,14 @@ fn escape_space() {
     assert_eq!(r"hello<i> world</i>", &html_string(r"hello\it\ world"));
 }
 #[test]
+fn escape_pound() {
+    assert_eq!(r"hello<i>#world</i>", &html_string(r"hello\it\#world"));
+}
+#[test]
+fn escape_dollar() {
+    assert_eq!(r"hello<i>$world</i>", &html_string(r"hello\it\$world"));
+}
+#[test]
 fn escape_percent() {
     assert_eq!(r"50% full", &html_string(r"50\% full"));
 }

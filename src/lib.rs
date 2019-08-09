@@ -355,6 +355,12 @@ pub fn html_paragraph(
                     r"\%" => {
                         fmt.write_all(b"%")?;
                     }
+                    r"\#" => {
+                        fmt.write_all(b"#")?;
+                    }
+                    r"\$" => {
+                        fmt.write_all(b"$")?;
+                    }
                     r"\bf" => {
                         latex = finish_standalone_macro(latex);
                         fmt.write_all(b"<b>")?;
