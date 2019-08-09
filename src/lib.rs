@@ -28,6 +28,84 @@ pub fn html_string(latex: &str) -> String {
     String::from_utf8(s).expect("should be no problem with utf8 conversion")
 }
 
+fn needs_quoting_at_start(x: &str) -> Option<usize> {
+    if x.len() == 0 {
+        return None;
+    }
+    let badstuff = "<>&\"'/";
+    if x.starts_with("``") || x.starts_with("''") {
+        Some(2)
+    } else if badstuff.contains(x.chars().next().unwrap()) {
+        Some(1)
+    } else {
+        None
+    }
+}
+
+fn find_next_quoting(x: &str) -> Option<(usize,usize)> {
+    for i in 0..x.len() {
+        if let Some(substr) = x.get(i..) {
+            if let Some(len) = needs_quoting_at_start(substr) {
+                return Some((i, i+len));
+            }
+        }
+    }
+    None
+}
+
+#[test]
+fn test_find_next_quoting() {
+    assert_eq!(find_next_quoting("  ''  "), Some((2,4)));
+}
+
+/// This just does simple textual formatting
+fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    while let Some((start, end)) = find_next_quoting(latex) {
+        fmt.write_all(latex[..start].as_bytes())?;
+        let needs_quote = &latex[start..end];
+        latex = &latex[end..];
+        fmt.write_all(match needs_quote {
+            "<" => "&lt;",
+            ">" => "&gt;",
+            "&" => "&amp;",
+            "\"" => "&quot;",
+            "'" => "&#x27;",
+            "/" => "&#x2f;",
+            "``" => "“",
+            "''" => "”",
+            _ => unreachable!(),
+        }.as_bytes())?;
+    }
+    fmt.write_all(latex.as_bytes())
+}
+
+#[test]
+fn test_fmt_double_quotes() {
+    let mut s: Vec<u8> = Vec::new();
+    fmt_as_html(&mut s, "  ''  ").unwrap();
+    assert_eq!(&String::from_utf8(s).unwrap(), "  ”  ");
+    let mut s: Vec<u8> = Vec::new();
+    fmt_as_html(&mut s, "  ``  ").unwrap();
+    assert_eq!(&String::from_utf8(s).unwrap(), "  “  ");
+}
+
+/// This just does error formatting with html escaping
+fn fmt_error(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
+    fmt.write_all(br#"<span class="error">"#)?;
+    fmt_as_html(fmt, latex)?;
+    fmt.write_all(br#"</span>"#)
+}
+
+/// This just does error formatting with html escaping
+fn fmt_errors(fmt: &mut impl std::io::Write, latex: &[&str]) -> Result<(), std::io::Error>
+{
+    fmt.write_all(br#"<span class="error">"#)?;
+    for x in latex {
+        fmt_as_html(fmt, x)?;
+    }
+    fmt.write_all(br#"</span>"#)
+}
+
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if let Some(i) = latex.find(r"\section") {
@@ -184,7 +262,7 @@ pub fn html_paragraph(
             return Ok(());
         }
         if let Some(i) = latex.find(|c| c == '\\' || c == '{' || c == '$') {
-            fmt.write_all(latex[..i].as_bytes())?;
+            fmt_as_html(fmt, &latex[..i])?;
             latex = &latex[i..];
             let c = latex.chars().next().unwrap();
             if c == '\\' {
@@ -216,7 +294,9 @@ pub fn html_paragraph(
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
                         } else {
-                            write!(fmt, r#"<img src="{}"/>"#, &arg[1..arg.len()-1])?;
+                            fmt.write_all(br#"<img src=""#)?;
+                            fmt_as_html(fmt, &arg[1..arg.len()-1])?;
+                            fmt.write_all(br#""/>"#)?;
                         }
                     }
                     r"\caption" => {
@@ -292,7 +372,7 @@ pub fn html_paragraph(
                         let name = env_name(latex);
                         latex = &latex[name.len()..];
                         if name.chars().last() != Some('}') {
-                            write!(fmt, r#"<span class="error">\begin{}</span>"#, name)?;
+                            fmt_errors(fmt, &[r"\begin", name])?;
                         } else if name == "{figure}" {
                             if let Some(i) = latex.find(r"\end{figure}") {
                                 fmt.write_all(b"<figure>")?;
@@ -306,9 +386,11 @@ pub fn html_paragraph(
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
                             if env == "" {
-                                write!(fmt, r#"<span class="error">\begin{}</span>"#, name)?;
+                                fmt_errors(fmt, &[r"\begin", name])?;
                             } else {
-                                write!(fmt, r#"\begin{}{}"#, name, env)?;
+                                fmt.write_all(br#"\begin"#)?;
+                                fmt_as_html(fmt, name)?;
+                                fmt_as_html(fmt, env)?;
                             }
                         } else if name == "{itemize}" {
                             fmt.write_all(b"<ul>")?;
@@ -317,7 +399,7 @@ pub fn html_paragraph(
                             if li.trim().len() > 0 {
                                 // Nothing should precede the first
                                 // \item except whitespace.
-                                write!(fmt, r#"<span class="error">{}</span>"#, li)?;
+                                fmt_error(fmt, li)?;
                             }
                             loop {
                                 let li = finish_item(latex);
@@ -356,7 +438,7 @@ pub fn html_paragraph(
                             if li.trim().len() > 0 {
                                 // Nothing should precede the first
                                 // \item except whitespace.
-                                write!(fmt, r#"<span class="error">{}</span>"#, li)?;
+                                fmt_error(fmt, li)?;
                             }
                             loop {
                                 let li = finish_item(latex);
@@ -391,21 +473,21 @@ pub fn html_paragraph(
                         } else {
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
-                            write!(fmt, r#"<span class="error">\begin{}{}</span>"#, name, env)?;
+                            fmt_errors(fmt, &[r"\begin", name, env])?;
                         }
                     }
                     r"\end" => {
                         let name = env_name(latex);
                         latex = &latex[name.len()..];
-                        write!(fmt, r#"<span class="error">\end{}</span>"#, name)?;
+                        fmt_errors(fmt, &[r"\end", name])?;
                     }
                     _ => {
-                        write!(fmt, r#"<span class="error">{}</span>"#, name)?;
+                        fmt_error(fmt, name)?;
                     }
                 }
             } else if c == '$' {
                 if let Some(i) = latex[1..].find('$') {
-                    fmt.write_all(latex[..i + 2].as_bytes())?;
+                    fmt_as_html(fmt, &latex[..i + 2])?;
                     latex = &latex[i + 2..];
                 } else {
                     fmt.write_all(br#"<span class="error">$</span>"#)?;
@@ -421,7 +503,7 @@ pub fn html_paragraph(
                 }
             }
         } else {
-            return fmt.write_all(latex.as_bytes());
+            return fmt_as_html(fmt, latex);
         }
     }
 }

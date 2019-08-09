@@ -112,6 +112,11 @@ the solution is here
 }
 
 #[test]
+fn quotes() {
+    assert_eq!(r#"foo “bar” baz"#, &html_string(r"foo ``bar'' baz"));
+}
+
+#[test]
 fn includegraphics() {
     assert_eq!(r#"hello<img src="filename"/>foo"#, &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo"));
 }
