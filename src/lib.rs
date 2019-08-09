@@ -361,6 +361,24 @@ pub fn html_paragraph(
                     r"\$" => {
                         fmt.write_all(b"$")?;
                     }
+                    r"\(" => {
+                        if let Some(i) = latex.find(r"\)") {
+                            fmt.write_all(br"\(")?;
+                            fmt_as_html(fmt, &latex[..i+2])?;
+                            latex = &latex[i+2..];
+                        } else {
+                            fmt_error(fmt, r"\(")?;
+                        }
+                    }
+                    r"\[" => {
+                        if let Some(i) = latex.find(r"\]") {
+                            fmt.write_all(br"\[")?;
+                            fmt_as_html(fmt, &latex[..i+2])?;
+                            latex = &latex[i+2..];
+                        } else {
+                            fmt_error(fmt, r"\(")?;
+                        }
+                    }
                     r"\bf" => {
                         latex = finish_standalone_macro(latex);
                         fmt.write_all(b"<b>")?;
