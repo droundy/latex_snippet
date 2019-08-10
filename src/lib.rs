@@ -304,6 +304,17 @@ pub fn html_paragraph(
                             fmt.write_all(b"</em>")?;
                         }
                     }
+                    r"\footnote" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\footnote{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<aside>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</aside>")?;
+                        }
+                    }
                     r"\textbf" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
