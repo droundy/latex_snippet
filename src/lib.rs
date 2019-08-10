@@ -286,6 +286,17 @@ pub fn html_paragraph(
                             fmt.write_all(b"</em>")?;
                         }
                     }
+                    r"\textbf" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\textbf{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<b>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</b>")?;
+                        }
+                    }
                     r"\includegraphics" => {
                         let opt = optional_argument(latex);
                         latex = &latex[opt.len()..];
@@ -325,7 +336,7 @@ pub fn html_paragraph(
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
-                            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                            fmt.write_all(br#"<span class="error">\error{</span>"#)?;
                         } else {
                             fmt.write_all(br#"<span> class="error">"#)?;
                             html(fmt, arg)?;
@@ -336,7 +347,7 @@ pub fn html_paragraph(
                         let arg = parse_title(latex);
                         latex = latex[arg.len()..].trim_start();
                         if arg == "{" {
-                            fmt.write_all(br#"<span class="error">\emph{</span>"#)?;
+                            fmt.write_all(br#"<span class="error">\paragraph{</span>"#)?;
                         } else {
                             fmt.write_all(b"<h5>")?;
                             html(fmt, arg)?;
@@ -887,7 +898,8 @@ pub fn check_latex(latex: &str) -> String {
         "section*", "subsection*", "subsubsection*",
         r"begin", r"end", r"includegraphics", r"columnwidth",
         "emph", "paragraph", r"noindent", "textwidth", r"item",
-        r"psi", r"Psi",
+        "textbf"
+        r"psi", r"Psi", "phi", "Phi", "delta", "Delta",
         r#""o"#, r#""u"#, r"&", r"%",
         r"left", r"right", r"frac",
         r"pm", r";", r",",
