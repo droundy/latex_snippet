@@ -1,6 +1,34 @@
 use super::*;
 
 #[test]
+fn test_physics_macros() {
+    assert_eq!(r"
+\langle {foo}|
+bar
+|{baz}\rangle 
+
+d\hspace*{-0.08em}\bar{}\hspace*{0.1em} X
+
+\left(\frac{T}{p}\right)_{V}
+
+\warning{myderiv should be thermoderivative}\left(\frac{T}{p}\right)_{V}
+
+",
+               &physics_macros(r"
+\bra{foo}
+bar
+\ket{baz}
+
+\dbar X
+
+\thermoderivative{T}{p}{V}
+
+\myderiv{T}{p}{V}
+
+"));
+}
+
+#[test]
 fn test_section() {
     assert_eq!("xx
 <section><h2>foo</h2>

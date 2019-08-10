@@ -756,6 +756,85 @@ fn test_argument() {
 }
 
 
+/// Substitute five physics macros
+pub fn physics_macros(latex: &str) -> String {
+    let mut latex = latex; // this makes the lifetime local to the function
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\ket{") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i+r"\ket".len()..];
+        let arg = argument(latex);
+        latex = &latex[arg.len()..];
+        refined.push_str("|");
+        refined.push_str(arg);
+        refined.push_str(r"\rangle ");
+    }
+    refined.push_str(latex);
+    latex = &refined;
+
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\bra{") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i+r"\bra".len()..];
+        let arg = argument(latex);
+        latex = &latex[arg.len()..];
+        refined.push_str(r"\langle ");
+        refined.push_str(arg);
+        refined.push_str(r"|");
+    }
+    refined.push_str(latex);
+    latex = &refined;
+
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\dbar ") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i+r"\dbar".len()..];
+        refined.push_str(r"d\hspace*{-0.08em}\bar{}\hspace*{0.1em}");
+    }
+    refined.push_str(latex);
+    latex = &refined;
+
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\myderiv{") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i+r"\myderiv".len()..];
+        let arg1 = argument(latex);
+        latex = &latex[arg1.len()..];
+        let arg2 = argument(latex);
+        latex = &latex[arg2.len()..];
+        let arg3 = argument(latex);
+        latex = &latex[arg3.len()..];
+        refined.push_str(r#"\warning{myderiv should be thermoderivative}"#);
+        refined.push_str(r"\left(\frac");
+        refined.push_str(arg1);
+        refined.push_str(arg2);
+        refined.push_str(r"\right)_");
+        refined.push_str(arg3);
+    }
+    refined.push_str(latex);
+    latex = &refined;
+
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\thermoderivative{") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i+r"\thermoderivative".len()..];
+        let arg1 = argument(latex);
+        latex = &latex[arg1.len()..];
+        let arg2 = argument(latex);
+        latex = &latex[arg2.len()..];
+        let arg3 = argument(latex);
+        latex = &latex[arg3.len()..];
+        refined.push_str(r"\left(\frac");
+        refined.push_str(arg1);
+        refined.push_str(arg2);
+        refined.push_str(r"\right)_");
+        refined.push_str(arg3);
+    }
+    refined.push_str(latex);
+
+    refined
+}
+
 /// Check latex against supported macros
 pub fn check_latex(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
