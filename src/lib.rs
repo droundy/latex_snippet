@@ -935,7 +935,7 @@ pub fn check_latex(latex: &str) -> String {
     // pass along any math symbols without understanding them, so long
     // as MathJax *does* understand them.
     let good_macros = &[
-        "section", "subsection", "subsubsection",
+        "section", "subsection", "subsubsection", "footnote",
         "section*", "subsection*", "subsubsection*",
         r"begin", r"end", r"includegraphics", r"columnwidth",
         "emph", "paragraph", r"noindent", "textwidth", r"item",
