@@ -310,7 +310,7 @@ pub fn html_paragraph(
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\footnote{</span>"#)?;
                         } else {
-                            fmt.write_all(b"<aside>")?;
+                            fmt.write_all(b"<sup>*</sup><aside><sup>*</sup>")?;
                             html_subsubsection(fmt, arg)?;
                             fmt.write_all(b"</aside>")?;
                         }
