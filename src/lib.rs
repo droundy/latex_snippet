@@ -111,6 +111,9 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
     if let Some(i) = latex.find(r"\section") {
         html_section(fmt, &latex[..i])?;
         latex = &latex[i + r"\section".len()..];
+        if latex.chars().next() == Some('*') {
+            latex = &latex[1..];
+        }
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
@@ -129,6 +132,9 @@ pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::i
             html_section(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i + r"\section".len()..];
+            if latex.chars().next() == Some('*') {
+                latex = &latex[1..];
+            }
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
@@ -152,6 +158,9 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
     if let Some(i) = latex.find(r"\subsection") {
         html_subsection(fmt, &latex[..i])?;
         latex = &latex[i + r"\subsection".len()..];
+        if latex.chars().next() == Some('*') {
+            latex = &latex[1..];
+        }
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
@@ -170,6 +179,9 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
             html_subsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i + r"\subsection".len()..];
+            if latex.chars().next() == Some('*') {
+                latex = &latex[1..];
+            }
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
@@ -193,6 +205,9 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
     if let Some(i) = latex.find(r"\subsubsection") {
         html_subsubsection(fmt, &latex[..i])?;
         latex = &latex[i + r"\subsubsection".len()..];
+        if latex.chars().next() == Some('*') {
+            latex = &latex[1..];
+        }
         let title = parse_title(latex);
         latex = &latex[title.len()..];
         if title == "{" {
@@ -211,6 +226,9 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
             html_subsubsection(fmt, &latex[..i])?;
             fmt.write_all(b"</section>")?; // We finished a section.
             latex = &latex[i + r"\subsubsection".len()..];
+            if latex.chars().next() == Some('*') {
+                latex = &latex[1..];
+            }
             let title = parse_title(latex);
             latex = &latex[title.len()..];
             if title == "{" {
@@ -343,7 +361,7 @@ pub fn html_paragraph(
                             fmt.write_all(b"</span>")?;
                         }
                     }
-                    r"\paragraph" => {
+                    r"\paragraph" | r"\paragraph*" => {
                         let arg = parse_title(latex);
                         latex = latex[arg.len()..].trim_start();
                         if arg == "{" {
@@ -569,7 +587,7 @@ fn finish_standalone_macro(latex: &str) -> &str {
 }
 
 fn macro_name(latex: &str) -> &str {
-    if let Some(i) = latex[1..].find(|c: char| !c.is_alphabetic()) {
+    if let Some(i) = latex[1..].find(|c: char| !c.is_alphabetic() && c != '*') {
         if i == 0 {
             &latex[..2]
         } else {
@@ -745,12 +763,9 @@ fn optional_argument(latex: &str) -> &str {
     }
 }
 
-fn parse_title(mut latex: &str) -> &str {
+fn parse_title(latex: &str) -> &str {
     if latex.len() == 0 {
         return ""
-    }
-    if latex.chars().next().unwrap() == '*' {
-        latex = &latex[1..]; // just ignore a *
     }
     if latex.chars().next().unwrap().is_digit(10) {
         &latex[..1]
@@ -971,7 +986,7 @@ pub fn include_solutions(mut latex: &str) -> String {
             refined.push_str(r"\paragraph*{Solution}{\it ");
             if let Some(i) = latex.find(r"\end{solution}") {
                 refined.push_str(&latex[..i]);
-                refined.push_str("}");
+                refined.push_str("}\n\n");
                 latex = &latex[i + r"\end{solution}".len()..];
             } else {
                 refined.push_str(latex);

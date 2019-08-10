@@ -122,6 +122,8 @@ hello
 \paragraph*{Solution}{\it 
 the solution is here
 }
+
+
 foo"#, &include_solutions(r"
 hello
 \begin{solution}
@@ -133,11 +135,38 @@ foo"));
 hello
 \paragraph*{Solution}{\it 
 the solution is here
-}"#, &include_solutions(r"
+}
+
+"#, &include_solutions(r"
 hello
 \begin{solution}
 the solution is here
 \end{solution}"));
+
+    assert_eq!(r#"
+\paragraph*{Solution}{\it 
+foo
+}
+
+"#, &include_solutions(r"
+\begin{solution}
+foo
+\end{solution}"));
+
+    assert_eq!(r#"<h5>Solution</h5>foo
+"#, &html_string(r"\paragraph*{Solution}
+foo
+"));
+
+    assert_eq!(r#"
+<h5>Solution</h5><i>
+foo
+</i>
+
+"#, &html_string(&include_solutions(r"
+\begin{solution}
+foo
+\end{solution}")));
 }
 
 #[test]
