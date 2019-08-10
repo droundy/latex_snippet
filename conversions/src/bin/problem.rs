@@ -49,6 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         use std::io::Read;
         std::io::stdin().read_to_string(&mut latex)?;
     }
+    latex = latex_snippet::physics_macros(&latex);
     if args.check {
         latex = latex_snippet::check_latex(&latex);
     }

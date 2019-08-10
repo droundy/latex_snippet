@@ -7,11 +7,12 @@ fn test_physics_macros() {
 bar
 |{baz}\rangle 
 
-d\hspace*{-0.08em}\bar{}\hspace*{0.1em} X
+{d\hspace{-0.28em}\bar{}} X
 
 \left(\frac{T}{p}\right)_{V}
 
-\warning{myderiv should be thermoderivative}\left(\frac{T}{p}\right)_{V}
+\left( % \myderiv
+\frac{T}{p}\right)_{V}
 
 ",
                &physics_macros(r"

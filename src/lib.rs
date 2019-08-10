@@ -789,7 +789,7 @@ pub fn physics_macros(latex: &str) -> String {
     while let Some(i) = latex.find(r"\dbar ") {
         refined.push_str(&latex[..i]);
         latex = &latex[i+r"\dbar".len()..];
-        refined.push_str(r"d\hspace*{-0.08em}\bar{}\hspace*{0.1em}");
+        refined.push_str(r"{d\hspace{-0.28em}\bar{}}");
     }
     refined.push_str(latex);
     latex = &refined;
@@ -804,8 +804,8 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[arg2.len()..];
         let arg3 = argument(latex);
         latex = &latex[arg3.len()..];
-        refined.push_str(r#"\warning{myderiv should be thermoderivative}"#);
-        refined.push_str(r"\left(\frac");
+        refined.push_str(r"\left( % \myderiv
+\frac");
         refined.push_str(arg1);
         refined.push_str(arg2);
         refined.push_str(r"\right)_");
@@ -893,6 +893,7 @@ pub fn check_latex(latex: &str) -> String {
         r"pm", r";", r",",
         r"text", "textit", "textrm", r"it", r"em",
         r"textbackslash",
+        "langle", "rangle",
     ];
     for &m in good_macros.iter() {
         macros.remove(m);
@@ -900,6 +901,7 @@ pub fn check_latex(latex: &str) -> String {
     // Unsupported macros.
     let bad_macros = &[
         "newcommand",
+        "mathchar", // unsupported by mathjax
         "renewcommand",
         "newenvironment", // have namespacing issues
         "usepackage",     // big can of worms
