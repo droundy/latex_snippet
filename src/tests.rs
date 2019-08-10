@@ -192,7 +192,7 @@ fn hello_it() {
 #[test]
 fn inline_math() {
     assert_eq!(
-        r"hello good $\cos^2x$ math",
+        r"hello good \(\cos^2x\) math",
         &html_string(r"hello good $\cos^2x$ math")
     );
     assert_eq!(
