@@ -898,7 +898,7 @@ pub fn check_latex(latex: &str) -> String {
         "section*", "subsection*", "subsubsection*",
         r"begin", r"end", r"includegraphics", r"columnwidth",
         "emph", "paragraph", r"noindent", "textwidth", r"item",
-        "textbf"
+        "textbf",
         r"psi", r"Psi", "phi", "Phi", "delta", "Delta",
         r#""o"#, r#""u"#, r"&", r"%",
         r"left", r"right", r"frac",
