@@ -522,10 +522,23 @@ pub fn html_paragraph(
                 }
             } else if c == '$' {
                 if let Some(i) = latex[1..].find('$') {
-                    fmt.write_all(br"\(")?;
-                    fmt_as_html(fmt, &latex[1..i + 1])?;
-                    fmt.write_all(br"\)")?;
-                    latex = &latex[i + 2..];
+                    if i == 0 {
+                        // It is a $$ actually
+                        if let Some(i) = latex[2..].find("$$") {
+                            fmt.write_all(br"\[")?;
+                            fmt_as_html(fmt, &latex[2..i + 2])?;
+                            fmt.write_all(br"\]")?;
+                            latex = &latex[i + 4..];
+                        } else {
+                            fmt.write_all(br#"<span class="error">$$</span>"#)?;
+                            latex = &latex[2..];
+                        }
+                    } else {
+                        fmt.write_all(br"\(")?;
+                        fmt_as_html(fmt, &latex[1..i + 1])?;
+                        fmt.write_all(br"\)")?;
+                        latex = &latex[i + 2..];
+                    }
                 } else {
                     fmt.write_all(br#"<span class="error">$</span>"#)?;
                     latex = &latex[1..];
