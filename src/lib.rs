@@ -880,7 +880,7 @@ pub fn physics_macros(latex: &str) -> String {
         let arg = argument(latex);
         latex = &latex[arg.len()..];
         refined.push_str("|");
-        refined.push_str(arg);
+        refined.push_str(&physics_macros(arg));
         refined.push_str(r"\rangle ");
     }
     refined.push_str(latex);
@@ -893,7 +893,7 @@ pub fn physics_macros(latex: &str) -> String {
         let arg = argument(latex);
         latex = &latex[arg.len()..];
         refined.push_str(r"\langle ");
-        refined.push_str(arg);
+        refined.push_str(&physics_macros(arg));
         refined.push_str(r"|");
     }
     refined.push_str(latex);
@@ -920,10 +920,10 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[arg3.len()..];
         refined.push_str(r"\left( % \myderiv
 \frac");
-        refined.push_str(arg1);
-        refined.push_str(arg2);
+        refined.push_str(&physics_macros(arg1));
+        refined.push_str(&physics_macros(arg2));
         refined.push_str(r"\right)_");
-        refined.push_str(arg3);
+        refined.push_str(&physics_macros(arg3));
     }
     refined.push_str(latex);
     latex = &refined;
@@ -939,10 +939,10 @@ pub fn physics_macros(latex: &str) -> String {
         let arg3 = argument(latex);
         latex = &latex[arg3.len()..];
         refined.push_str(r"\left(\frac");
-        refined.push_str(arg1);
-        refined.push_str(arg2);
+        refined.push_str(&physics_macros(arg1));
+        refined.push_str(&physics_macros(arg2));
         refined.push_str(r"\right)_");
-        refined.push_str(arg3);
+        refined.push_str(&physics_macros(arg3));
     }
     refined.push_str(latex);
 
