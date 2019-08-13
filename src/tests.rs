@@ -198,6 +198,10 @@ fn emph_hello() {
     assert_eq!("<em>hello</em>", &html_string(r"\emph{hello}"));
 }
 #[test]
+fn textit_hello() {
+    assert_eq!("<i>hello</i>", &html_string(r"\textit{hello}"));
+}
+#[test]
 fn paragraph_test() {
     assert_eq!(
         "<p><h5>hello</h5>This is good
