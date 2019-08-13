@@ -508,6 +508,24 @@ pub fn html_paragraph(
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
                             }
+                        } else if name == "{quote}" {
+                            if let Some(i) = latex.find(r"\end{quote}") {
+                                fmt.write_all(b"<blockquote>")?;
+                                html_paragraph(fmt, &latex[..i])?;
+                                fmt.write_all(b"</blockquote>")?;
+                                latex = &latex[i+br"\end{quote}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{quote}</span>"#)?;
+                            }
+                        } else if name == "{quotation}" {
+                            if let Some(i) = latex.find(r"\end{quotation}") {
+                                fmt.write_all(b"<blockquote>")?;
+                                html_paragraph(fmt, &latex[..i])?;
+                                fmt.write_all(b"</blockquote>")?;
+                                latex = &latex[i+br"\end{quotation}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{quotation}</span>"#)?;
+                            }
                         } else if math_environs.contains(&name) {
                             let env = end_env(name, latex);
                             latex = &latex[env.len()..];
