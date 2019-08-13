@@ -517,6 +517,15 @@ pub fn html_paragraph(
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{quote}</span>"#)?;
                             }
+                        } else if name == "{center}" {
+                            if let Some(i) = latex.find(r"\end{center}") {
+                                fmt.write_all(br#"<div class="center">"#)?;
+                                html_paragraph(fmt, &latex[..i])?;
+                                fmt.write_all(b"</div>")?;
+                                latex = &latex[i+br"\end{center}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{center}</span>"#)?;
+                            }
                         } else if name == "{quotation}" {
                             if let Some(i) = latex.find(r"\end{quotation}") {
                                 fmt.write_all(b"<blockquote>")?;
@@ -987,7 +996,7 @@ pub fn check_latex(latex: &str) -> String {
         "eqnarray*",
         "multline",
         "multline*",
-        "quote", "quotation"
+        "quote", "quotation", "center",
     ];
     for &e in good_environments.iter() {
         environments.remove(e);
