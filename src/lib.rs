@@ -21,6 +21,25 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
     }
 }
 
+fn strip_comments(latex: &str) -> String {
+    let temp = latex.replace(r"\%", r"\percent_holder");
+    let mut out = String::with_capacity(temp.len()+1);
+    for x in temp.split('\n') {
+        if x.chars().next() == Some('%') {
+            continue; // skip this line entirely
+        }
+        if let Some(i) = x.find('%') {
+            out.push_str(&x[..i]);
+            out.push(' '); // comment "blocks" line ending.
+        } else {
+            out.push_str(x);
+            out.push('\n')
+        }
+    }
+    out.pop();
+    out.replace(r"\percent_holder", r"\%")
+}
+
 /// Convert some LaTeX into an HTML `String`.
 pub fn html_string(latex: &str) -> String {
     let mut s: Vec<u8> = Vec::with_capacity(latex.len());

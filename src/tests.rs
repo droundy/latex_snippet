@@ -475,4 +475,15 @@ some more stuff
     );
 }
 
+#[test]
+fn test_strip_comments() {
+    assert_eq!(r"
+this  is\% 
+",
+               &strip_comments(r"
+this % comment
+is\%% comment
+% whole line comment
 
+"));
+}
