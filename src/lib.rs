@@ -299,7 +299,11 @@ pub fn html_paragraph(
     fmt: &mut impl std::io::Write,
     mut latex: &str,
 ) -> Result<(), std::io::Error> {
-    let math_environs = &["{equation}", "{align}"];
+    let math_environs = &["{equation}", "{equation*}",
+                          "{align}", "{align*}",
+                          "{eqnarray}", "{eqnarray*}",
+                          "{multline}", "{multline*}",
+    ];
     loop {
         if latex.len() == 0 {
             return Ok(());
@@ -961,6 +965,10 @@ pub fn check_latex(latex: &str) -> String {
         "equation*",
         "align",
         "align*",
+        "eqnarray",
+        "eqnarray*",
+        "multline",
+        "multline*",
     ];
     for &e in good_environments.iter() {
         environments.remove(e);
