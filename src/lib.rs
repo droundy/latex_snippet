@@ -318,6 +318,25 @@ pub fn html_paragraph(
                     r"\textbackslash" => {
                         fmt.write_all(b"\\")?;
                     }
+                    r"\label" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\label{</span>"#)?;
+                        } else {
+                            write!(fmt, r#"<a id="{}"/>"#, arg)?;
+                        }
+                    }
+                    r"\ref" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\ref{</span>"#)?;
+                        } else {
+                            write!(fmt, r##"<a class="ref" href="#{}">{}</a>"##,
+                                   arg, arg)?;
+                        }
+                    }
                     r"\emph" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
@@ -427,6 +446,9 @@ pub fn html_paragraph(
                     }
                     r"\ " => {
                         fmt.write_all(b" ")?;
+                    }
+                    r"\noindent" => {
+                        // Nothing to do?
                     }
                     r"\%" => {
                         fmt.write_all(b"%")?;
