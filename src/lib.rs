@@ -987,6 +987,7 @@ pub fn check_latex(latex: &str) -> String {
         "eqnarray*",
         "multline",
         "multline*",
+        "quote", "quotation"
     ];
     for &e in good_environments.iter() {
         environments.remove(e);
