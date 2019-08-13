@@ -21,7 +21,11 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
     }
 }
 
-fn strip_comments(latex: &str) -> String {
+/// Cut out comments
+///
+/// This is only useful with html_section and friends, since html and
+/// html_string do this automatically.
+pub fn strip_comments(latex: &str) -> String {
     let temp = latex.replace(r"\%", r"\percent_holder");
     let mut out = String::with_capacity(temp.len()+1);
     for x in temp.split('\n') {
@@ -126,7 +130,9 @@ fn fmt_errors(fmt: &mut impl std::io::Write, latex: &[&str]) -> Result<(), std::
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+pub fn html(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
+    let latex = strip_comments(latex);
+    let mut latex: &str = &latex;
     if let Some(i) = latex.find(r"\section") {
         html_section(fmt, &latex[..i])?;
         latex = &latex[i + r"\section".len()..];
