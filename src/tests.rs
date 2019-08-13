@@ -487,3 +487,19 @@ is\%% comment
 
 "));
 }
+
+#[test]
+fn tabular() {
+    assert_eq!(r"
+<table><tr><td>
+foo </td><td> bar </td><td> baz </td></tr><tr><td>
+extra </td><td> good
+</td></tr></table>
+",
+               &html_string(r"
+\begin{tabular}{ccc}
+foo & bar & baz \\
+extra & good
+\end{tabular}
+"));
+}

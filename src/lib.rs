@@ -508,14 +508,28 @@ pub fn html_paragraph(
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
                             }
-                        } else if name == "{quote}" {
-                            if let Some(i) = latex.find(r"\end{quote}") {
-                                fmt.write_all(b"<blockquote>")?;
-                                html_paragraph(fmt, &latex[..i])?;
-                                fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i+br"\end{quote}".len()..];
+                        } else if name == "{tabular}" {
+                            if let Some(i) = latex.find(r"\end{tabular}") {
+                                let rest = &latex[i+br"\end{tabular}".len()..];
+                                let arg = argument(latex);
+                                latex = &latex[arg.len()..i];
+                                // We just ignore the alignment marks.
+                                fmt.write_all(br#"<table>"#)?;
+                                for row in latex.split(r"\\") {
+                                    let row = row.replace(r"\&", "myampersand");
+                                    fmt.write_all(br#"<tr>"#)?;
+                                    for column in row.split("&") {
+                                        fmt.write_all(br#"<td>"#)?;
+                                        let column = column.replace("myampersand", r"\&");
+                                        html_paragraph(fmt, &column)?;
+                                        fmt.write_all(br#"</td>"#)?;
+                                    }
+                                    fmt.write_all(br#"</tr>"#)?;
+                                }
+                                fmt.write_all(b"</table>")?;
+                                latex = rest;
                             } else {
-                                fmt.write_all(br#"<span class="error">\begin{quote}</span>"#)?;
+                                fmt.write_all(br#"<span class="error">\begin{tabular}</span>"#)?;
                             }
                         } else if name == "{center}" {
                             if let Some(i) = latex.find(r"\end{center}") {
@@ -525,6 +539,15 @@ pub fn html_paragraph(
                                 latex = &latex[i+br"\end{center}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{center}</span>"#)?;
+                            }
+                        } else if name == "{quote}" {
+                            if let Some(i) = latex.find(r"\end{quote}") {
+                                fmt.write_all(b"<blockquote>")?;
+                                html_paragraph(fmt, &latex[..i])?;
+                                fmt.write_all(b"</blockquote>")?;
+                                latex = &latex[i+br"\end{quote}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{quote}</span>"#)?;
                             }
                         } else if name == "{quotation}" {
                             if let Some(i) = latex.find(r"\end{quotation}") {
