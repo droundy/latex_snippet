@@ -360,6 +360,17 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                             fmt.write_all(b"</em>")?;
                         }
                     }
+                    r"\underline" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\underline{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<u>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</u>")?;
+                        }
+                    }
                     r"\textit" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];

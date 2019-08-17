@@ -203,6 +203,10 @@ fn emph_hello() {
     assert_eq!("<em>hello</em>", &html_string(r"\emph{hello}"));
 }
 #[test]
+fn underline_hello() {
+    assert_eq!("<u>hello</u>", &html_string(r"\underline{hello}"));
+}
+#[test]
 fn textit_hello() {
     assert_eq!("<i>hello</i>", &html_string(r"\textit{hello}"));
 }
