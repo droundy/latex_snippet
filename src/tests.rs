@@ -255,6 +255,14 @@ fn escape_pound() {
     assert_eq!(r"hello<i>#world</i>", &html_string(r"hello\it\#world"));
 }
 #[test]
+fn escape_underscore() {
+    assert_eq!(r"hello<i>_world</i>", &html_string(r"hello\it\_world"));
+}
+#[test]
+fn escape_ampersand() {
+    assert_eq!(r"hello<i>&amp; world</i>", &html_string(r"hello\it\& world"));
+}
+#[test]
 fn escape_dollar() {
     assert_eq!(r"hello<i>$world</i>", &html_string(r"hello\it\$world"));
 }

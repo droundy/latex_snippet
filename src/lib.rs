@@ -471,6 +471,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                     r"\$" => {
                         fmt.write_all(b"$")?;
                     }
+                    r"\&" => {
+                        fmt.write_all(b"&amp;")?;
+                    }
+                    r"\_" => {
+                        fmt.write_all(b"_")?;
+                    }
                     r"\(" => {
                         if let Some(i) = latex.find(r"\)") {
                             fmt.write_all(br"\(")?;
