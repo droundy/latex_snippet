@@ -175,6 +175,11 @@ fn quotes() {
 }
 
 #[test]
+fn curly_braces() {
+    assert_eq!(r#"  \( \} \)  \{"#, &html_string(r" { $ \} $ } \{"));
+}
+
+#[test]
 fn includegraphics() {
     assert_eq!(r#"hello<img src="filename"/>foo"#, &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo"));
 }

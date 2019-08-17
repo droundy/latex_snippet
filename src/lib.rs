@@ -83,6 +83,10 @@ fn test_find_next_quoting() {
 
 /// This just does simple textual formatting
 fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    if latex.contains("amp#x7b;") || latex.contains("amp#x7d;") {
+        return fmt_as_html(fmt, &latex.replace("amp#x7b;", r"\{").replace("amp#x7d;", r"\}"));
+    }
+
     while let Some((start, end)) = find_next_quoting(latex) {
         fmt.write_all(latex[..start].as_bytes())?;
         let needs_quote = &latex[start..end];
@@ -295,10 +299,14 @@ pub fn html_subsubsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Res
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html_paragraph(
-    fmt: &mut impl std::io::Write,
-    mut latex: &str,
-) -> Result<(), std::io::Error> {
+pub fn html_paragraph(fmt: &mut impl std::io::Write,
+                      latex: &str) -> Result<(), std::io::Error> {
+    let mut latex = latex;
+    let latex_sans_stuff: String;
+    if latex.contains(r"\{") || latex.contains(r"\}") {
+        latex_sans_stuff = latex.replace(r"\{", "amp#x7b;").replace(r"\}", "amp#x7d;");
+        latex = &latex_sans_stuff;
+    }
     let math_environs = &["{equation}", "{equation*}",
                           "{align}", "{align*}",
                           "{eqnarray}", "{eqnarray*}",
