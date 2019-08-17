@@ -526,8 +526,11 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                             fmt_errors(fmt, &[r"\begin", name])?;
                         } else if name == "{figure}" {
                             // Just skip any figure placement parameters
-                            let opt = optional_argument(latex);
-                            latex = &latex[opt.len()..];
+                            if latex.chars().next().unwrap() == '[' {
+                                if let Some(i) = latex.find(']') {
+                                    latex = &latex[i+1..];
+                                }
+                            }
                             if let Some(i) = latex.find(r"\end{figure}") {
                                 fmt.write_all(b"<figure>")?;
                                 html_paragraph(fmt, &latex[..i])?;

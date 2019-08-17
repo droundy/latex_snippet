@@ -187,6 +187,8 @@ fn includegraphics() {
 #[test]
 fn figure() {
     assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}foo\end{figure}"));
+
+    assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}[ht]foo\end{figure}"));
 }
 
 #[test]
