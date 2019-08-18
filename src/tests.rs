@@ -2,7 +2,8 @@ use super::*;
 
 #[test]
 fn test_physics_macros() {
-    assert_eq!(r"
+    assert_eq!(
+        r"
 \langle {foo}|
 bar
 |{baz}\rangle 
@@ -15,7 +16,8 @@ bar
 \frac{T}{p}\right)_{V}
 
 ",
-               &physics_macros(r"
+        &physics_macros(
+            r"
 \bra{foo}
 bar
 \ket{baz}
@@ -26,147 +28,198 @@ bar
 
 \myderiv{T}{p}{V}
 
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn test_section() {
-    assert_eq!("xx
+    assert_eq!(
+        "xx
 <section><h2>foo</h2>
 bar
 </section><section><h2>baz</h2>
 baz
 </section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \section{foo}
 bar
 \section{baz}
 baz
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn test_subsection() {
-    assert_eq!("xx
+    assert_eq!(
+        "xx
 <section><h3>foo</h3>
 bar
 </section><section><h3>baz</h3>
 baz
 </section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \subsection{foo}
 bar
 \subsection{baz}
 baz
-"));
+"
+        )
+    );
 
-    assert_eq!("xx
+    assert_eq!(
+        "xx
 <section><h3>foo</h3>
 bar
 <section><h4>baz</h4>
 baz
 </section></section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \subsection{foo}
 bar
 \subsubsection{baz}
 baz
-"));
+"
+        )
+    );
 
-    assert_eq!("xx
+    assert_eq!(
+        "xx
 <section><h2>foo</h2>
 bar
 <section><h4>baz</h4>
 baz
 </section></section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \section{foo}
 bar
 \subsubsection{baz}
 baz
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn test_subsubsection() {
-    assert_eq!("xx
+    assert_eq!(
+        "xx
 <section><h4>foo</h4>
 bar
 </section><section><h4>baz</h4>
 baz
 </section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \subsubsection{foo}
 bar
 \subsubsection{baz}
 baz
-"));
-    assert_eq!("xx
+"
+        )
+    );
+    assert_eq!(
+        "xx
 <section><h4>foo</h4>
 bar
 </section><section><h3>baz</h3>
 baz
 </section>",
-               &html_string(r"xx
+        &html_string(
+            r"xx
 \subsubsection{foo}
 bar
 \subsection{baz}
 baz
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn includesolutions() {
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 hello
 \paragraph*{Solution}{\it 
 the solution is here
 }
 
 
-foo"#, &include_solutions(r"
+foo"#,
+        &include_solutions(
+            r"
 hello
 \begin{solution}
 the solution is here
 \end{solution}
-foo"));
+foo"
+        )
+    );
 
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 hello
 \paragraph*{Solution}{\it 
 the solution is here
 }
 
-"#, &include_solutions(r"
+"#,
+        &include_solutions(
+            r"
 hello
 \begin{solution}
 the solution is here
-\end{solution}"));
+\end{solution}"
+        )
+    );
 
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 \paragraph*{Solution}{\it 
 foo
 }
 
-"#, &include_solutions(r"
+"#,
+        &include_solutions(
+            r"
 \begin{solution}
 foo
-\end{solution}"));
+\end{solution}"
+        )
+    );
 
-    assert_eq!(r#"<h5>Solution</h5>foo
-"#, &html_string(r"\paragraph*{Solution}
+    assert_eq!(
+        r#"<h5>Solution</h5>foo
+"#,
+        &html_string(
+            r"\paragraph*{Solution}
 foo
-"));
+"
+        )
+    );
 
-    assert_eq!(r#"
+    assert_eq!(
+        r#"
 <h5>Solution</h5><i>
 foo
 </i>
 
-"#, &html_string(&include_solutions(r"
+"#,
+        &html_string(&include_solutions(
+            r"
 \begin{solution}
 foo
-\end{solution}")));
+\end{solution}"
+        ))
+    );
 }
 
 #[test]
@@ -181,25 +234,41 @@ fn curly_braces() {
 
 #[test]
 fn includegraphics() {
-    assert_eq!(r#"hello<img src="filename"/>foo"#, &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo"));
+    assert_eq!(
+        r#"hello<img src="filename"/>foo"#,
+        &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo")
+    );
 }
 
 #[test]
 fn figure() {
-    assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}foo\end{figure}"));
+    assert_eq!(
+        "hello<figure>foo</figure>",
+        &html_string(r"hello\begin{figure}foo\end{figure}")
+    );
 
-    assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}[ht]foo\end{figure}"));
+    assert_eq!(
+        "hello<figure>foo</figure>",
+        &html_string(r"hello\begin{figure}[ht]foo\end{figure}")
+    );
 
-    assert_eq!(r#"hello<figure class="center">foo</figure>"#,
-               &html_string(r"hello\begin{figure}\centering foo\end{figure}"));
+    assert_eq!(
+        r#"hello<figure class="center">foo</figure>"#,
+        &html_string(r"hello\begin{figure}\centering foo\end{figure}")
+    );
 
-    assert_eq!(r#"hello<figure> <div class="center">foo</div></figure>"#,
-               &html_string(r"hello\begin{figure} \centering foo\end{figure}"));
+    assert_eq!(
+        r#"hello<figure> <div class="center">foo</div></figure>"#,
+        &html_string(r"hello\begin{figure} \centering foo\end{figure}")
+    );
 }
 
 #[test]
 fn figure_with_caption() {
-    assert_eq!("hello<figure>foo<figcaption>hello</figcaption></figure>", &html_string(r"hello\begin{figure}foo\caption{hello}\end{figure}"));
+    assert_eq!(
+        "hello<figure>foo<figcaption>hello</figcaption></figure>",
+        &html_string(r"hello\begin{figure}foo\caption{hello}\end{figure}")
+    );
 }
 
 #[test]
@@ -272,7 +341,10 @@ fn escape_underscore() {
 }
 #[test]
 fn escape_ampersand() {
-    assert_eq!(r"hello<i>&amp; world</i>", &html_string(r"hello\it\& world"));
+    assert_eq!(
+        r"hello<i>&amp; world</i>",
+        &html_string(r"hello\it\& world")
+    );
 }
 #[test]
 fn escape_dollar() {
@@ -502,29 +574,37 @@ some more stuff
 
 #[test]
 fn test_strip_comments() {
-    assert_eq!(r"
+    assert_eq!(
+        r"
 this  is\% 
 ",
-               &strip_comments(r"
+        &strip_comments(
+            r"
 this % comment
 is\%% comment
 % whole line comment
 
-"));
+"
+        )
+    );
 }
 
 #[test]
 fn tabular() {
-    assert_eq!(r"
+    assert_eq!(
+        r"
 <table><tr><td>
 foo </td><td> bar </td><td> baz </td></tr><tr><td>
 extra </td><td> good
 </td></tr></table>
 ",
-               &html_string(r"
+        &html_string(
+            r"
 \begin{tabular}{ccc}
 foo & bar & baz \\
 extra & good
 \end{tabular}
-"));
+"
+        )
+    );
 }

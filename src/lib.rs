@@ -27,7 +27,7 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
 /// html_string do this automatically.
 pub fn strip_comments(latex: &str) -> String {
     let temp = latex.replace(r"\%", r"\percent_holder");
-    let mut out = String::with_capacity(temp.len()+1);
+    let mut out = String::with_capacity(temp.len() + 1);
     for x in temp.split('\n') {
         if x.chars().next() == Some('%') {
             continue; // skip this line entirely
@@ -65,11 +65,11 @@ fn needs_quoting_at_start(x: &str) -> Option<usize> {
     }
 }
 
-fn find_next_quoting(x: &str) -> Option<(usize,usize)> {
+fn find_next_quoting(x: &str) -> Option<(usize, usize)> {
     for i in 0..x.len() {
         if let Some(substr) = x.get(i..) {
             if let Some(len) = needs_quoting_at_start(substr) {
-                return Some((i, i+len));
+                return Some((i, i + len));
             }
         }
     }
@@ -78,30 +78,36 @@ fn find_next_quoting(x: &str) -> Option<(usize,usize)> {
 
 #[test]
 fn test_find_next_quoting() {
-    assert_eq!(find_next_quoting("  ''  "), Some((2,4)));
+    assert_eq!(find_next_quoting("  ''  "), Some((2, 4)));
 }
 
 /// This just does simple textual formatting
 fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if latex.contains("amp#x7b;") || latex.contains("amp#x7d;") {
-        return fmt_as_html(fmt, &latex.replace("amp#x7b;", r"\{").replace("amp#x7d;", r"\}"));
+        return fmt_as_html(
+            fmt,
+            &latex.replace("amp#x7b;", r"\{").replace("amp#x7d;", r"\}"),
+        );
     }
 
     while let Some((start, end)) = find_next_quoting(latex) {
         fmt.write_all(latex[..start].as_bytes())?;
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
-        fmt.write_all(match needs_quote {
-            "<" => "&lt;",
-            ">" => "&gt;",
-            "&" => "&amp;",
-            "\"" => "&quot;",
-            "'" => "&#x27;",
-            "/" => "&#x2f;",
-            "``" => "“",
-            "''" => "”",
-            _ => unreachable!(),
-        }.as_bytes())?;
+        fmt.write_all(
+            match needs_quote {
+                "<" => "&lt;",
+                ">" => "&gt;",
+                "&" => "&amp;",
+                "\"" => "&quot;",
+                "'" => "&#x27;",
+                "/" => "&#x2f;",
+                "``" => "“",
+                "''" => "”",
+                _ => unreachable!(),
+            }
+            .as_bytes(),
+        )?;
     }
     fmt.write_all(latex.as_bytes())
 }
@@ -124,8 +130,7 @@ fn fmt_error(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::
 }
 
 /// This just does error formatting with html escaping
-fn fmt_errors(fmt: &mut impl std::io::Write, latex: &[&str]) -> Result<(), std::io::Error>
-{
+fn fmt_errors(fmt: &mut impl std::io::Write, latex: &[&str]) -> Result<(), std::io::Error> {
     fmt.write_all(br#"<span class="error">"#)?;
     for x in latex {
         fmt_as_html(fmt, x)?;
@@ -230,7 +235,10 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+pub fn html_subsection(
+    fmt: &mut impl std::io::Write,
+    mut latex: &str,
+) -> Result<(), std::io::Error> {
     if let Some(i) = latex.find(r"\subsubsection") {
         html_subsubsection(fmt, &latex[..i])?;
         latex = &latex[i + r"\subsubsection".len()..];
@@ -277,7 +285,10 @@ pub fn html_subsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html_subsubsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+pub fn html_subsubsection(
+    fmt: &mut impl std::io::Write,
+    mut latex: &str,
+) -> Result<(), std::io::Error> {
     let am_alone = finish_paragraph(latex).len() == latex.len();
     loop {
         let p = finish_paragraph(latex);
@@ -299,18 +310,22 @@ pub fn html_subsubsection(fmt: &mut impl std::io::Write, mut latex: &str) -> Res
 }
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
-pub fn html_paragraph(fmt: &mut impl std::io::Write,
-                      latex: &str) -> Result<(), std::io::Error> {
+pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
     let mut latex = latex;
     let latex_sans_stuff: String;
     if latex.contains(r"\{") || latex.contains(r"\}") {
         latex_sans_stuff = latex.replace(r"\{", "amp#x7b;").replace(r"\}", "amp#x7d;");
         latex = &latex_sans_stuff;
     }
-    let math_environs = &["{equation}", "{equation*}",
-                          "{align}", "{align*}",
-                          "{eqnarray}", "{eqnarray*}",
-                          "{multline}", "{multline*}",
+    let math_environs = &[
+        "{equation}",
+        "{equation*}",
+        "{align}",
+        "{align*}",
+        "{eqnarray}",
+        "{eqnarray*}",
+        "{multline}",
+        "{multline*}",
     ];
     loop {
         if latex.len() == 0 {
@@ -345,8 +360,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\ref{</span>"#)?;
                         } else {
-                            write!(fmt, r##"<a class="ref" href="#{}">{}</a>"##,
-                                   arg, arg)?;
+                            write!(fmt, r##"<a class="ref" href="#{}">{}</a>"##, arg, arg)?;
                         }
                     }
                     r"\emph" => {
@@ -413,7 +427,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                             fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
                         } else {
                             fmt.write_all(br#"<img src=""#)?;
-                            fmt_as_html(fmt, &arg[1..arg.len()-1])?;
+                            fmt_as_html(fmt, &arg[1..arg.len() - 1])?;
                             fmt.write_all(br#""/>"#)?;
                         }
                     }
@@ -497,8 +511,8 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                     r"\(" => {
                         if let Some(i) = latex.find(r"\)") {
                             fmt.write_all(br"\(")?;
-                            fmt_as_html(fmt, &latex[..i+2])?;
-                            latex = &latex[i+2..];
+                            fmt_as_html(fmt, &latex[..i + 2])?;
+                            latex = &latex[i + 2..];
                         } else {
                             fmt_error(fmt, r"\(")?;
                         }
@@ -506,8 +520,8 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                     r"\[" => {
                         if let Some(i) = latex.find(r"\]") {
                             fmt.write_all(br"\[")?;
-                            fmt_as_html(fmt, &latex[..i+2])?;
-                            latex = &latex[i+2..];
+                            fmt_as_html(fmt, &latex[..i + 2])?;
+                            latex = &latex[i + 2..];
                         } else {
                             fmt_error(fmt, r"\(")?;
                         }
@@ -534,12 +548,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                             // Just skip any figure placement parameters
                             if latex.chars().next().unwrap() == '[' {
                                 if let Some(i) = latex.find(']') {
-                                    latex = &latex[i+1..];
+                                    latex = &latex[i + 1..];
                                 }
                             }
                             if let Some(i) = latex.find(r"\end{figure}") {
-                                if latex.starts_with(r"\centering ") ||
-                                    latex.starts_with(r"\centering\n")
+                                if latex.starts_with(r"\centering ")
+                                    || latex.starts_with(r"\centering\n")
                                 {
                                     fmt.write_all(br#"<figure class="center">"#)?;
                                     html_paragraph(fmt, &latex[r"\centering ".len()..i])?;
@@ -548,13 +562,13 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                                     html_paragraph(fmt, &latex[..i])?;
                                 }
                                 fmt.write_all(b"</figure>")?;
-                                latex = &latex[i+br"\end{figure}".len()..];
+                                latex = &latex[i + br"\end{figure}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
                             }
                         } else if name == "{tabular}" {
                             if let Some(i) = latex.find(r"\end{tabular}") {
-                                let rest = &latex[i+br"\end{tabular}".len()..];
+                                let rest = &latex[i + br"\end{tabular}".len()..];
                                 let arg = argument(latex);
                                 latex = &latex[arg.len()..i];
                                 // We just ignore the alignment marks.
@@ -580,7 +594,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                                 fmt.write_all(br#"<div class="center">"#)?;
                                 html_paragraph(fmt, &latex[..i])?;
                                 fmt.write_all(b"</div>")?;
-                                latex = &latex[i+br"\end{center}".len()..];
+                                latex = &latex[i + br"\end{center}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{center}</span>"#)?;
                             }
@@ -589,7 +603,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                                 fmt.write_all(b"<blockquote>")?;
                                 html_paragraph(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i+br"\end{quote}".len()..];
+                                latex = &latex[i + br"\end{quote}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{quote}</span>"#)?;
                             }
@@ -598,7 +612,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                                 fmt.write_all(b"<blockquote>")?;
                                 html_paragraph(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i+br"\end{quotation}".len()..];
+                                latex = &latex[i + br"\end{quotation}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{quotation}</span>"#)?;
                             }
@@ -932,7 +946,7 @@ fn optional_argument(latex: &str) -> &str {
 
 fn parse_title(latex: &str) -> &str {
     if latex.len() == 0 {
-        return ""
+        return "";
     }
     if latex.chars().next().unwrap().is_digit(10) {
         &latex[..1]
@@ -963,14 +977,13 @@ fn test_argument() {
     assert_eq!(argument(r"{foo}  "), r"{foo}");
 }
 
-
 /// Substitute five physics macros
 pub fn physics_macros(latex: &str) -> String {
     let mut latex = latex; // this makes the lifetime local to the function
     let mut refined = String::with_capacity(latex.len());
     while let Some(i) = latex.find(r"\ket{") {
         refined.push_str(&latex[..i]);
-        latex = &latex[i+r"\ket".len()..];
+        latex = &latex[i + r"\ket".len()..];
         let arg = argument(latex);
         latex = &latex[arg.len()..];
         refined.push_str("|");
@@ -983,7 +996,7 @@ pub fn physics_macros(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     while let Some(i) = latex.find(r"\bra{") {
         refined.push_str(&latex[..i]);
-        latex = &latex[i+r"\bra".len()..];
+        latex = &latex[i + r"\bra".len()..];
         let arg = argument(latex);
         latex = &latex[arg.len()..];
         refined.push_str(r"\langle ");
@@ -996,7 +1009,7 @@ pub fn physics_macros(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     while let Some(i) = latex.find(r"\dbar ") {
         refined.push_str(&latex[..i]);
-        latex = &latex[i+r"\dbar".len()..];
+        latex = &latex[i + r"\dbar".len()..];
         refined.push_str(r"{d\hspace{-0.28em}\bar{}}");
     }
     refined.push_str(latex);
@@ -1005,15 +1018,17 @@ pub fn physics_macros(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     while let Some(i) = latex.find(r"\myderiv{") {
         refined.push_str(&latex[..i]);
-        latex = &latex[i+r"\myderiv".len()..];
+        latex = &latex[i + r"\myderiv".len()..];
         let arg1 = argument(latex);
         latex = &latex[arg1.len()..];
         let arg2 = argument(latex);
         latex = &latex[arg2.len()..];
         let arg3 = argument(latex);
         latex = &latex[arg3.len()..];
-        refined.push_str(r"\left( % \myderiv
-\frac");
+        refined.push_str(
+            r"\left( % \myderiv
+\frac",
+        );
         refined.push_str(&physics_macros(arg1));
         refined.push_str(&physics_macros(arg2));
         refined.push_str(r"\right)_");
@@ -1025,7 +1040,7 @@ pub fn physics_macros(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     while let Some(i) = latex.find(r"\thermoderivative{") {
         refined.push_str(&latex[..i]);
-        latex = &latex[i+r"\thermoderivative".len()..];
+        latex = &latex[i + r"\thermoderivative".len()..];
         let arg1 = argument(latex);
         latex = &latex[arg1.len()..];
         let arg2 = argument(latex);
@@ -1064,7 +1079,9 @@ pub fn check_latex(latex: &str) -> String {
         "eqnarray*",
         "multline",
         "multline*",
-        "quote", "quotation", "center",
+        "quote",
+        "quotation",
+        "center",
     ];
     for &e in good_environments.iter() {
         environments.remove(e);
@@ -1097,18 +1114,47 @@ pub fn check_latex(latex: &str) -> String {
     // pass along any math symbols without understanding them, so long
     // as MathJax *does* understand them.
     let good_macros = &[
-        "section", "subsection", "subsubsection", "footnote",
-        "section*", "subsection*", "subsubsection*",
-        r"begin", r"end", r"includegraphics", r"columnwidth",
-        "emph", "paragraph", r"noindent", "textwidth", r"item",
+        "section",
+        "subsection",
+        "subsubsection",
+        "footnote",
+        "section*",
+        "subsection*",
+        "subsubsection*",
+        r"begin",
+        r"end",
+        r"includegraphics",
+        r"columnwidth",
+        "emph",
+        "paragraph",
+        r"noindent",
+        "textwidth",
+        r"item",
         "textbf",
-        r"psi", r"Psi", "phi", "Phi", "delta", "Delta",
-        r#""o"#, r#""u"#, r"&", r"%",
-        r"left", r"right", r"frac",
-        r"pm", r";", r",",
-        r"text", "textit", "textrm", r"it", r"em",
+        r"psi",
+        r"Psi",
+        "phi",
+        "Phi",
+        "delta",
+        "Delta",
+        r#""o"#,
+        r#""u"#,
+        r"&",
+        r"%",
+        r"left",
+        r"right",
+        r"frac",
+        r"pm",
+        r";",
+        r",",
+        r"text",
+        "textit",
+        "textrm",
+        r"it",
+        r"em",
         r"textbackslash",
-        "langle", "rangle",
+        "langle",
+        "rangle",
     ];
     for &m in good_macros.iter() {
         macros.remove(m);
@@ -1127,7 +1173,9 @@ pub fn check_latex(latex: &str) -> String {
         if macros.contains(m) {
             refined.push_str(&format!(
                 r#"\error{{bad macro: \textbackslash{{}}{}}}\\
-"#, m));
+"#,
+                m
+            ));
             macros.remove(m);
         }
     }
@@ -1141,7 +1189,8 @@ pub fn check_latex(latex: &str) -> String {
     for m in macros {
         refined.push_str(&format!(
             r#"\warning{{possibly bad macro: \textbackslash{{}}{}}}\\
-"#, m
+"#,
+            m
         ));
     }
     refined.push_str(&latex);
