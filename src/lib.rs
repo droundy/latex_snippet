@@ -1059,6 +1059,7 @@ pub fn check_latex(latex: &str) -> String {
         "equation*",
         "align",
         "align*",
+        "figure",
         "eqnarray",
         "eqnarray*",
         "multline",
