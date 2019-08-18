@@ -189,6 +189,12 @@ fn figure() {
     assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}foo\end{figure}"));
 
     assert_eq!("hello<figure>foo</figure>", &html_string(r"hello\begin{figure}[ht]foo\end{figure}"));
+
+    assert_eq!(r#"hello<figure class="center">foo</figure>"#,
+               &html_string(r"hello\begin{figure}\centering foo\end{figure}"));
+
+    assert_eq!(r#"hello<figure> <div class="center">foo</div></figure>"#,
+               &html_string(r"hello\begin{figure} \centering foo\end{figure}"));
 }
 
 #[test]

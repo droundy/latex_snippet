@@ -464,8 +464,14 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                     r"\it" => {
                         latex = finish_standalone_macro(latex);
                         fmt.write_all(b"<i>")?;
-                        html(fmt, latex)?;
+                        html_subsubsection(fmt, latex)?;
                         return fmt.write_all(b"</i>");
+                    }
+                    r"\centering" => {
+                        latex = finish_standalone_macro(latex);
+                        fmt.write_all(br#"<div class="center">"#)?;
+                        html_subsubsection(fmt, latex)?;
+                        return fmt.write_all(b"</div>");
                     }
                     r"\ " => {
                         fmt.write_all(b" ")?;
@@ -532,8 +538,15 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write,
                                 }
                             }
                             if let Some(i) = latex.find(r"\end{figure}") {
-                                fmt.write_all(b"<figure>")?;
-                                html_paragraph(fmt, &latex[..i])?;
+                                if latex.starts_with(r"\centering ") ||
+                                    latex.starts_with(r"\centering\n")
+                                {
+                                    fmt.write_all(br#"<figure class="center">"#)?;
+                                    html_paragraph(fmt, &latex[r"\centering ".len()..i])?;
+                                } else {
+                                    fmt.write_all(b"<figure>")?;
+                                    html_paragraph(fmt, &latex[..i])?;
+                                }
                                 fmt.write_all(b"</figure>")?;
                                 latex = &latex[i+br"\end{figure}".len()..];
                             } else {
