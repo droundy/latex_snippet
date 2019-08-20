@@ -608,3 +608,14 @@ extra & good
         )
     );
 }
+
+
+#[test]
+fn test_ref() {
+    assert_eq!(
+        r" foo \ref{foo} bar",
+        &html_string(
+            r" foo \ref{foo} bar"
+        )
+    );
+}

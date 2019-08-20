@@ -369,9 +369,8 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\eqref{</span>"#)?;
                         } else {
-                            fmt.write_all(b"\ref{")?;
+                            fmt.write_all(br"\eqref")?;
                             fmt.write_all(arg.as_bytes())?;
-                            fmt.write_all(b"}")?;
                         }
                     }
                     r"\ref" => {
@@ -380,9 +379,8 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\ref{</span>"#)?;
                         } else {
-                            fmt.write_all(b"\ref{")?;
+                            fmt.write_all(br"\ref")?;
                             fmt.write_all(arg.as_bytes())?;
-                            fmt.write_all(b"}")?;
                         }
                     }
                     r"\emph" => {
