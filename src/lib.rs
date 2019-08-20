@@ -354,13 +354,35 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             write!(fmt, r#"<a id="{}"/>"#, arg)?;
                         }
                     }
+                    // r"\ref" => {
+                    //     let arg = argument(latex);
+                    //     latex = &latex[arg.len()..];
+                    //     if arg == "{" {
+                    //         fmt.write_all(br#"<span class="error">\ref{</span>"#)?;
+                    //     } else {
+                    //         write!(fmt, r##"<a class="ref" href="#{}">{}</a>"##, arg, arg)?;
+                    //     }
+                    // }
+                    r"\eqref" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\eqref{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"\ref{")?;
+                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(b"}")?;
+                        }
+                    }
                     r"\ref" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\ref{</span>"#)?;
                         } else {
-                            write!(fmt, r##"<a class="ref" href="#{}">{}</a>"##, arg, arg)?;
+                            fmt.write_all(b"\ref{")?;
+                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(b"}")?;
                         }
                     }
                     r"\emph" => {
