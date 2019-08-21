@@ -1,6 +1,6 @@
 [package]
 name = "latex_snippet"
-version = "0.1.12"
+version = "0.1.13"
 authors = ["David Roundy <roundyd@physics.oregonstate.edu>"]
 edition = "2018"
 description = "Convert even erroneous LaTeX snippets into HTML"
