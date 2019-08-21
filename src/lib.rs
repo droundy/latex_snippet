@@ -1145,6 +1145,9 @@ pub fn check_latex(latex: &str) -> String {
     // as MathJax *does* understand them.
     let good_macros = &[
         "section",
+        "eqref",
+        "ref",
+        "label",
         "centering",
         "subsection",
         "subsubsection",
