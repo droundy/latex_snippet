@@ -587,6 +587,15 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
                             }
+                        } else if name == "{solution}" {
+                            if let Some(i) = latex.find(r"\end{solution}") {
+                                fmt.write_all(br#"<div class="solution"><h5>Solution:</h5>"#)?;
+                                html_subsubsection(fmt, &latex[..i])?;
+                                fmt.write_all(b"</div>")?;
+                                latex = &latex[i + br"\end{solution}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{solution}</span>"#)?;
+                            }
                         } else if name == "{tabular}" {
                             if let Some(i) = latex.find(r"\end{tabular}") {
                                 let rest = &latex[i + br"\end{tabular}".len()..];

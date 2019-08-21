@@ -53,8 +53,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.check {
         latex = latex_snippet::check_latex(&latex);
     }
-    latex = if args.solution {
+    latex = if args.solution && args._format != Format::HTML {
         latex_snippet::include_solutions(&latex)
+    } else if args.solution {
+        latex
     } else {
         latex_snippet::omit_solutions(&latex)
     };
