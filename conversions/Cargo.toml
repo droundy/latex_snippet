@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 
-auto-args = "0.2.2"
+auto-args = "0.2.4"
 latex_snippet = { path = "..", version = "0.1.9" }
 regex = "1"
 tempfile = "3.1.0"
