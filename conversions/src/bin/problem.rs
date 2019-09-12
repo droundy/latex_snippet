@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "osubash",
                 "-ss",
                 "-N",
-                "-H",
+                "--raw",
                 "-e",
                 &format!(
                     "select problem_latex from osu_production.admin_app_problem where id = {}",
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ])
             .output()
             .expect("failed to execute process");
-        latex = String::from_utf8_lossy(&output.stdout[28..output.stdout.len() - 18]).to_string();
+        latex = String::from_utf8_lossy(&output.stdout).to_string();
     } else {
         use std::io::Read;
         std::io::stdin().read_to_string(&mut latex)?;
