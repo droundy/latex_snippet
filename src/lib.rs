@@ -970,7 +970,7 @@ fn optional_argument(latex: &str) -> &str {
         // we must have unbalanced parentheses
         &latex[..1]
     } else {
-        &latex[..1]
+        ""
     }
 }
 
