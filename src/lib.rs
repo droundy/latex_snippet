@@ -1055,13 +1055,11 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[arg2.len()..];
         let arg3 = argument(latex);
         latex = &latex[arg3.len()..];
-        refined.push_str(
-            r"\left( % \myderiv
-\frac",
-        );
+        refined.push_str(r"\left(\frac{\partial ");
         refined.push_str(&physics_macros(arg1));
+        refined.push_str(r"}{\partial ");
         refined.push_str(&physics_macros(arg2));
-        refined.push_str(r"\right)_");
+        refined.push_str(r"}\right)_");
         refined.push_str(&physics_macros(arg3));
     }
     refined.push_str(latex);
@@ -1077,10 +1075,11 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[arg2.len()..];
         let arg3 = argument(latex);
         latex = &latex[arg3.len()..];
-        refined.push_str(r"\left(\frac");
+        refined.push_str(r"\left(\frac{\partial ");
         refined.push_str(&physics_macros(arg1));
+        refined.push_str(r"}{\partial ");
         refined.push_str(&physics_macros(arg2));
-        refined.push_str(r"\right)_");
+        refined.push_str(r"}\right)_");
         refined.push_str(&physics_macros(arg3));
     }
     refined.push_str(latex);

@@ -10,10 +10,9 @@ bar
 
 {d\hspace{-0.28em}\bar{}} X
 
-\left(\frac{T}{p}\right)_{V}
+\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
-\left( % \myderiv
-\frac{T}{p}\right)_{V}
+\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
 ",
         &physics_macros(
