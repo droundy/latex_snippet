@@ -685,7 +685,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                         latex = finish_standalone_macro(latex);
                                     } else {
                                         fmt.write_all(
-                                            br#"</ul><span class="error">MISSING END</span>"#,
+                                            br#"</ul><span class="error">MISSING \end{itemize}</span>"#,
                                         )?;
                                         break;
                                     }
@@ -724,7 +724,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                         latex = finish_standalone_macro(latex);
                                     } else {
                                         fmt.write_all(
-                                            br#"</ol><span class="error">MISSING END</span>"#,
+                                            br#"</ol><span class="error">MISSING \end{enumerate}</span>"#,
                                         )?;
                                         break;
                                     }
