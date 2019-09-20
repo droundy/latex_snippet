@@ -3,6 +3,8 @@
 //! This crate turns (a subset of) latex into html, with syntax errors
 //! reported using span elements.
 
+use wasm_bindgen::prelude::*;
+
 #[cfg(test)]
 mod tests;
 
@@ -25,6 +27,7 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
 ///
 /// This is only useful with html_section and friends, since html and
 /// html_string do this automatically.
+#[wasm_bindgen]
 pub fn strip_comments(latex: &str) -> String {
     let temp = latex.replace(r"\%", r"\percent_holder");
     let mut out = String::with_capacity(temp.len() + 1);
@@ -45,6 +48,7 @@ pub fn strip_comments(latex: &str) -> String {
 }
 
 /// Convert some LaTeX into an HTML `String`.
+#[wasm_bindgen]
 pub fn html_string(latex: &str) -> String {
     let mut s: Vec<u8> = Vec::with_capacity(latex.len());
     html(&mut s, latex).unwrap();
@@ -1008,6 +1012,7 @@ fn test_argument() {
 }
 
 /// Substitute five physics macros
+#[wasm_bindgen]
 pub fn physics_macros(latex: &str) -> String {
     let mut latex = latex; // this makes the lifetime local to the function
     let mut refined = String::with_capacity(latex.len());
@@ -1089,6 +1094,7 @@ pub fn physics_macros(latex: &str) -> String {
 }
 
 /// Check latex against supported macros
+#[wasm_bindgen]
 pub fn check_latex(latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     let environments = regex::Regex::new(r"\\begin\{([^\}]+)\}").unwrap();
@@ -1232,6 +1238,7 @@ pub fn check_latex(latex: &str) -> String {
 }
 
 /// Include solutions via \begin{solution}
+#[wasm_bindgen]
 pub fn include_solutions(mut latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     loop {
@@ -1258,6 +1265,7 @@ pub fn include_solutions(mut latex: &str) -> String {
 }
 
 /// Strip out solutions
+#[wasm_bindgen]
 pub fn omit_solutions(mut latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     // need to strip out solutions...
@@ -1276,4 +1284,24 @@ pub fn omit_solutions(mut latex: &str) -> String {
         }
     }
     refined
+}
+
+
+// The following are wasm-specific
+
+// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+// allocator.
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+pub fn set_panic_hook() {
+    //! When the `console_error_panic_hook` feature is enabled, we can call the
+    //! `set_panic_hook` function at least once during initialization, and then
+    //! we will get better error messages if our code ever panics.
+    //!
+    //! For more details see
+    //! https://github.com/rustwasm/console_error_panic_hook#readme
+    #[cfg(feature = "console_error_panic_hook")]
+    console_error_panic_hook::set_once();
 }
