@@ -10,10 +10,9 @@ bar
 
 {d\hspace{-0.28em}\bar{}} X
 
-\left(\frac{T}{p}\right)_{V}
+\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
-\left( % \myderiv
-\frac{T}{p}\right)_{V}
+\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
 ",
         &physics_macros(
@@ -514,7 +513,7 @@ buggy
 <ul><li>Carrots
 </li><li>Potatotes
 </li></ul>
-</li></ol><span class="error">MISSING END</span>Pears
+</li></ol><span class="error">MISSING \end{enumerate}</span>Pears
 <span class="error">\end{enumerate
 </span>some more stuff
 "#,
@@ -549,7 +548,7 @@ buggy
 <ul><li>Carrots
 </li><li>Potatotes
 </li></ul>
-</li></ul><span class="error">MISSING END</span>Pears
+</li></ul><span class="error">MISSING \end{itemize}</span>Pears
 <span class="error">\end{itemize
 </span>some more stuff
 "#,
