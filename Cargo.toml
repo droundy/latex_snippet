@@ -5,6 +5,7 @@ authors = ["David Roundy <roundyd@physics.oregonstate.edu>"]
 edition = "2018"
 description = "Convert even erroneous LaTeX snippets into HTML"
 license = "GPL-3.0-or-later"
+repository = "https://github.com/droundy/latex_snippet"
 
 [lib]
 name = "latex_snippet"

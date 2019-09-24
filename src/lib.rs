@@ -27,7 +27,6 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
 ///
 /// This is only useful with html_section and friends, since html and
 /// html_string do this automatically.
-#[wasm_bindgen]
 pub fn strip_comments(latex: &str) -> String {
     let temp = latex.replace(r"\%", r"\percent_holder");
     let mut out = String::with_capacity(temp.len() + 1);
