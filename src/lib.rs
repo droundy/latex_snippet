@@ -47,11 +47,24 @@ pub fn strip_comments(latex: &str) -> String {
 }
 
 /// Convert some LaTeX into an HTML `String`.
-#[wasm_bindgen]
 pub fn html_string(latex: &str) -> String {
     let mut s: Vec<u8> = Vec::with_capacity(latex.len());
     html(&mut s, latex).unwrap();
     String::from_utf8(s).expect("should be no problem with utf8 conversion")
+}
+
+/// Convert some LaTeX into an HTML `String`.
+#[wasm_bindgen]
+#[cfg(target_arch = "wasm32")]
+pub fn html_with_solution(latex: &str) -> String {
+    html_string(&include_solutions(&physics_macros(latex)))
+}
+
+/// Convert some LaTeX into an HTML `String`.
+#[wasm_bindgen]
+#[cfg(target_arch = "wasm32")]
+pub fn html_omit_solution(latex: &str) -> String {
+    html_string(&omit_solutions(&physics_macros(latex)))
 }
 
 fn needs_quoting_at_start(x: &str) -> Option<usize> {
@@ -1011,7 +1024,6 @@ fn test_argument() {
 }
 
 /// Substitute five physics macros
-#[wasm_bindgen]
 pub fn physics_macros(latex: &str) -> String {
     let mut latex = latex; // this makes the lifetime local to the function
     let mut refined = String::with_capacity(latex.len());
@@ -1236,7 +1248,6 @@ pub fn check_latex(latex: &str) -> String {
 }
 
 /// Include solutions via \begin{solution}
-#[wasm_bindgen]
 pub fn include_solutions(mut latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     loop {
@@ -1263,7 +1274,6 @@ pub fn include_solutions(mut latex: &str) -> String {
 }
 
 /// Strip out solutions
-#[wasm_bindgen]
 pub fn omit_solutions(mut latex: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
     // need to strip out solutions...
