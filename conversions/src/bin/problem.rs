@@ -20,6 +20,8 @@ struct Args {
     solution: bool,
     /// check for unsupported macros
     check: bool,
+    /// directory for figures
+    figs: String,
     /// primary key for database
     pk: Option<String>,
 }
@@ -49,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         use std::io::Read;
         std::io::stdin().read_to_string(&mut latex)?;
     }
-    latex = latex_snippet::physics_macros(&latex);
+    latex = latex_snippet::with_image_directory(&latex_snippet::physics_macros(&latex), &args.figs);
     if args.check {
         latex = latex_snippet::check_latex(&latex);
     }
