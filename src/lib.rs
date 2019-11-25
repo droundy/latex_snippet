@@ -1294,6 +1294,49 @@ pub fn omit_solutions(mut latex: &str) -> String {
     refined
 }
 
+/// Process `\includegraphics` with the specified image directory.
+pub fn with_image_directory(mut latex: &str, img_dir: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out solutions...
+    loop {
+        if let Some(i) = latex.find(r"\includegraphics[") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\includegraphics[".len()..];
+            if let Some(nxt) = latex.find("]{") {
+                latex = &latex[nxt + r"]{".len()..];
+                if let Some(endfn) = latex.find("}") {
+                    refined.push_str(r#"<img src=""#);
+                    refined.push_str(img_dir);
+                    refined.push_str(&latex[..endfn]);
+                    refined.push_str(r#""/>"#);
+                    latex = &latex[endfn + r"}".len()..];
+                } else {
+                    refined.push_str(r#"<span class="error">\includegraphics[..]{</span>"#);
+                }
+            } else {
+                refined.push_str(r#"<span class="error">\includegraphics[</span>"#);
+            }
+        } else if let Some(i) = latex.find(r"\includegraphics{") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\includegraphics{".len()..];
+            if let Some(endfn) = latex.find("}") {
+                refined.push_str(r#"<img src=""#);
+                refined.push_str(img_dir);
+                refined.push_str(&latex[..endfn]);
+                refined.push_str(r#""/>"#);
+                latex = &latex[endfn + r"}".len()..];
+            } else {
+                refined.push_str(r#"<span class="error">\includegraphics{</span>"#);
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
+
 
 // The following are wasm-specific
 

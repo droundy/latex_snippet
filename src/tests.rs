@@ -33,6 +33,17 @@ bar
 }
 
 #[test]
+fn test_with_image_directory() {
+    assert_eq!(
+        r#"some stuff before <img src="images/foo"/> and after"#,
+        &with_image_directory(
+            r"some stuff before \includegraphics{foo} and after",
+            "images/"
+        )
+    );
+}
+
+#[test]
 fn test_section() {
     assert_eq!(
         "xx
