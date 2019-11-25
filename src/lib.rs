@@ -67,6 +67,20 @@ pub fn html_omit_solution(latex: &str) -> String {
     html_string(&omit_solutions(&physics_macros(latex)))
 }
 
+/// Convert some LaTeX into an HTML `String`, including figures.
+#[wasm_bindgen]
+#[cfg(target_arch = "wasm32")]
+pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> String {
+    html_string(&include_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
+}
+
+/// Convert some LaTeX into an HTML `String`, including figures.
+#[wasm_bindgen]
+#[cfg(target_arch = "wasm32")]
+pub fn html_with_figures_omit_solution(latex: &str, figure_directory: &str) -> String {
+    html_string(&omit_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
+}
+
 fn needs_quoting_at_start(x: &str) -> Option<usize> {
     if x.len() == 0 {
         return None;
