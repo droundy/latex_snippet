@@ -81,7 +81,6 @@ pub fn html_with_figures_omit_solution(latex: &str, figure_directory: &str) -> S
     html_string(&omit_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
 }
 
-
 fn needs_quoting_at_start(x: &str) -> Option<usize> {
     if x.len() == 0 {
         return None;
