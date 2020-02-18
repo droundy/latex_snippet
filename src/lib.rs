@@ -134,7 +134,7 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
                 "/" => "&#x2f;",
                 "``" => "“",
                 "''" => "”",
-                _ => unreachable!(),
+                _ => panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote),
             }
             .as_bytes(),
         )?;
