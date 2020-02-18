@@ -268,6 +268,13 @@ pub fn html_section(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
     Ok(())
 }
 
+fn process_url_argument(url: &str) -> String {
+    let mut url = url.to_string();
+    url = url.replace('{', "");
+    url = url.replace('}', "");
+    url
+}
+
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html_subsection(
     fmt: &mut impl std::io::Write,
@@ -475,20 +482,22 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     }
                     r"\url" => {
                         let arg = argument(latex); // strip of {} create function to validate url
+                        let url = process_url_argument(arg);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\url{</span>"#)?;
                         } else {
                             fmt.write_all(b"<a href=\"")?;
-                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(url.as_bytes())?;
                             fmt.write_all(b"\">")?;
-                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(url.as_bytes())?;
                             fmt.write_all(b"</a>")?;
                         }
                     }
                     r"\href" => {
-                        let url = argument(latex); // strip of {}
-                        latex = &latex[url.len()..];
+                        let url_arg = argument(latex); // strip of {}
+                        latex = &latex[url_arg.len()..];
+                        let url = process_url_argument(url_arg);
                         if url == "{" {
                             fmt.write_all(br#"<span class="error">\href{</span>"#)?;
                         } else {
