@@ -940,19 +940,23 @@ fn finish_item(latex: &str) -> &str {
                 return "";
             }
         } else if earlier(next_end, next_begin) {
-            println!("about to peek in next_end {:?}", next_end);
-            let i = next_end.expect("next_end should have an end");
-            if nestedness == 0 {
-                return &latex[..so_far + i];
+            if let Some(i) = next_end {
+                if nestedness == 0 {
+                    return &latex[..so_far + i];
+                } else {
+                    nestedness -= 1;
+                    so_far += i + r"\\end{".len();
+                }
             } else {
-                nestedness -= 1;
-                so_far += i + r"\\end{".len();
+                panic!("next_end gives unexpected None");
             }
         } else {
-            println!("about to peek in next_begin {:?}", next_begin);
-            let i = next_begin.expect("next_begin should have a beginning");
-            nestedness += 1;
-            so_far += i + r"\\begin{".len();
+            if let Some(i) = next_begin {
+                nestedness += 1;
+                so_far += i + r"\\begin{".len();
+            } else {
+                panic!("next_begin gives unexpected None");
+            }
         }
     }
 }
