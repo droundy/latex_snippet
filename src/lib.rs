@@ -473,6 +473,40 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(b"</b>")?;
                         }
                     }
+                    r"\url" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\url{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<a href=\"")?;
+                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(b"\">")?;
+                            fmt.write_all(arg.as_bytes())?;
+                            fmt.write_all(b"</a>")?;
+                        }
+                    }
+                    r"\href" => {
+                        let url = argument(latex);
+                        latex = &latex[url.len()..];
+                        if url == "{" {
+                            fmt.write_all(br#"<span class="error">\href{</span>"#)?;
+                        } else {
+                            let arg = argument(latex);
+                            latex = &latex[arg.len()..];
+                            if arg == "{" {
+                                fmt.write_all(br#"<span class="error">\href{"#)?;
+                                fmt.write_all(url.as_bytes())?;
+                                fmt.write_all(br#"}{</span>"#)?;
+                            } else {
+                                fmt.write_all(b"<a href=\"")?;
+                                fmt.write_all(url.as_bytes())?;
+                                fmt.write_all(b"\">")?;
+                                fmt.write_all(arg.as_bytes())?;
+                                fmt.write_all(b"</a>")?;
+                            }
+                        }
+                    }
                     r"\includegraphics" => {
                         let opt = optional_argument(latex);
                         latex = &latex[opt.len()..];
