@@ -940,7 +940,7 @@ fn finish_item(latex: &str) -> &str {
                 return "";
             }
         } else if earlier(next_end, next_begin) {
-            let i = next_end.unwrap();
+            let i = next_end.expect("next_end should have an end");
             if nestedness == 0 {
                 return &latex[..so_far + i];
             } else {
@@ -948,7 +948,7 @@ fn finish_item(latex: &str) -> &str {
                 so_far += i + r"\\end{".len();
             }
         } else {
-            let i = next_begin.unwrap();
+            let i = next_begin.expect("next_begin should have a beginning");
             nestedness += 1;
             so_far += i + r"\\begin{".len();
         }
