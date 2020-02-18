@@ -57,6 +57,7 @@ pub fn html_string(latex: &str) -> String {
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_solution(latex: &str) -> String {
+    set_panic_hook();
     html_string(&include_solutions(&physics_macros(latex)))
 }
 
@@ -64,6 +65,7 @@ pub fn html_with_solution(latex: &str) -> String {
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn html_omit_solution(latex: &str) -> String {
+    set_panic_hook();
     html_string(&omit_solutions(&physics_macros(latex)))
 }
 
@@ -71,6 +73,7 @@ pub fn html_omit_solution(latex: &str) -> String {
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> String {
+    set_panic_hook();
     html_string(&include_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
 }
 
@@ -78,6 +81,7 @@ pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> St
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_figures_omit_solution(latex: &str, figure_directory: &str) -> String {
+    set_panic_hook();
     html_string(&omit_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
 }
 
