@@ -952,7 +952,7 @@ fn finish_item(latex: &str) -> &str {
                     so_far += i + r"\\end{".len();
                 }
             } else {
-                panic!("next_end gives unexpected None");
+                panic!("next_end gives unexpected None with next_begin {:?}", next_begin);
             }
         } else {
             if let Some(i) = next_begin {
