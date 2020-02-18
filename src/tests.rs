@@ -629,3 +629,15 @@ fn test_ref() {
         )
     );
 }
+
+#[test]
+fn test_itemize_broken() {
+    assert_eq!(
+            "\n<ul></ul><span class=\"error\">MISSING \\end{itemize}</span>\n<ul></ul><span class=\"error\">MISSING \\end{itemize}</span>\n",
+        &html_string(
+            r"
+\begin{itemize}
+\begin{itemize}
+")
+    );
+}

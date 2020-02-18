@@ -952,8 +952,8 @@ fn finish_item(latex: &str) -> &str {
                     so_far += i + r"\\end{".len();
                 }
             } else {
-                panic!("next_end gives unexpected None with next_begin {:?}, and content:\n{}",
-                       next_begin, &latex[so_far..]);
+                // There is no ending, but we are nested!!!
+                return "";
             }
         } else {
             if let Some(i) = next_begin {
