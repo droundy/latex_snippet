@@ -125,7 +125,7 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
         fmt.write_all(
-            match needs_quote {
+            match needs_quote { // needs_quote is constrained by needs_quoting_at_start above.
                 "<" => "&lt;",
                 ">" => "&gt;",
                 "&" => "&amp;",
