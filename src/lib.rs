@@ -474,7 +474,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         }
                     }
                     r"\url" => {
-                        let arg = argument(latex);
+                        let arg = argument(latex); // strip of {} create function to validate url
                         latex = &latex[arg.len()..];
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\url{</span>"#)?;
@@ -487,12 +487,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         }
                     }
                     r"\href" => {
-                        let url = argument(latex);
+                        let url = argument(latex); // strip of {}
                         latex = &latex[url.len()..];
                         if url == "{" {
                             fmt.write_all(br#"<span class="error">\href{</span>"#)?;
                         } else {
-                            let arg = argument(latex);
+                            let arg = argument(latex); // strip of {}
                             latex = &latex[arg.len()..];
                             if arg == "{" {
                                 fmt.write_all(br#"<span class="error">\href{"#)?;
@@ -502,7 +502,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 fmt.write_all(b"<a href=\"")?;
                                 fmt.write_all(url.as_bytes())?;
                                 fmt.write_all(b"\">")?;
-                                fmt.write_all(arg.as_bytes())?;
+                                html_subsubsection(fmt, arg)?;
                                 fmt.write_all(b"</a>")?;
                             }
                         }
