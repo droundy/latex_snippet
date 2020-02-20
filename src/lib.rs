@@ -485,7 +485,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         let url = process_url_argument(arg);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
-                            fmt.write_all(br#"<span class="error">\url{</span>"#)?;
+                            fmt.write_all(br#"<span class="error" data-error="bad-argument">\url{</span>"#)?;
                         } else {
                             fmt.write_all(b"<a href=\"")?;
                             fmt.write_all(url.as_bytes())?;
