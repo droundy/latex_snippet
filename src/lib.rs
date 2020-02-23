@@ -667,6 +667,31 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
                             }
+                        } else if name == "{wrapfigure}" {
+                            let align = argument(latex);
+                            latex = &latex[align.len()..i];
+                            let width = argument(latex);
+                            latex = &latex[width.len()..i];
+                            let width = parse_width(width);
+                            if let Some(i) = latex.find(r"\end{wrapfigure}") {
+                                if latex.starts_with(r"\centering ")
+                                    || latex.starts_with(r"\centering\n")
+                                {
+                                    fmt.write_all(br#"<figure class="float-sm-right center""#)?;
+                                    fmt.write_all(width.as_bytes())?;
+                                    fmt.write_all(b">")?;
+                                    html_paragraph(fmt, &latex[r"\centering ".len()..i])?;
+                                } else {
+                                    fmt.write_all(br#"<figure class="float-sm-right""#)?;
+                                    fmt.write_all(width.as_bytes())?;
+                                    fmt.write_all(b">")?;
+                                    html_paragraph(fmt, &latex[..i])?;
+                                }
+                                fmt.write_all(b"</wrapfigure>")?;
+                                latex = &latex[i + br"\end{wrapfigure}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{wrapfigure}</span>"#)?;
+                            }
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
                                 fmt.write_all(br#"<div class="solution"><h5>Solution:</h5>"#)?;
@@ -1063,7 +1088,7 @@ fn optional_argument(latex: &str) -> &str {
 
 /// Returns the class to be used
 fn parse_width(option: &str) -> String {
-    let em = regex::Regex::new(r"\[width=(\d+)(.+)\]").unwrap();
+    let em = regex::Regex::new(r"[\[\{]width=(\d+)(.+)[\}\]]").unwrap();
     if let Some(c) = em.captures(option) {
         let value = c.get(1).unwrap().as_str();
         let units = c.get(2).unwrap().as_str();
