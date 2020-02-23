@@ -1068,11 +1068,8 @@ fn parse_width(option: &str) -> String {
         let value = c.get(1).unwrap().as_str();
         let units = c.get(2).unwrap().as_str();
         match units {
-            "em" => {
-                return format!(r#" style="width:{}em""#, value);
-            }
-            "pt" => {
-                return format!(r#" style="width:{}px""#, value);
+            "em" | "ex" | "cm" | "in" | "mm" | "pt" => {
+                return format!(r#" style="width:{}{}""#, value, units);
             }
             _ => ()
         }
