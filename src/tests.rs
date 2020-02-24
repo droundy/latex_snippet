@@ -284,7 +284,7 @@ fn figure() {
 #[test]
 fn wrapfigure() {
     assert_eq!(
-        r#"hello<figure class="float-sm-right" style="width:10em">foo</figure>"#,
+        r#"hello<figure class="wrapfigure" style="width:10em">foo</figure>"#,
         &html_string(r"hello\begin{wrapfigure}{r}{10em}foo\end{wrapfigure}")
     );
 }

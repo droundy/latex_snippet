@@ -677,12 +677,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 if latex.starts_with(r"\centering ")
                                     || latex.starts_with(r"\centering\n")
                                 {
-                                    fmt.write_all(br#"<figure class="float-sm-right center""#)?;
+                                    fmt.write_all(br#"<figure class="wrapfigure center""#)?;
                                     fmt.write_all(width.as_bytes())?;
                                     fmt.write_all(b">")?;
                                     html_paragraph(fmt, &latex[r"\centering ".len()..i])?;
                                 } else {
-                                    fmt.write_all(br#"<figure class="float-sm-right""#)?;
+                                    fmt.write_all(br#"<figure class="wrapfigure""#)?;
                                     fmt.write_all(width.as_bytes())?;
                                     fmt.write_all(b">")?;
                                     html_paragraph(fmt, &latex[..i])?;
