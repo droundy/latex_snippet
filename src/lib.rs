@@ -1089,7 +1089,8 @@ fn optional_argument(latex: &str) -> &str {
 /// Returns the class to be used
 fn parse_width(option: &str) -> String {
     let em = regex::Regex::new(r"[\[\{]width=(\d+)(.+)[\}\]]").unwrap();
-    if let Some(c) = em.captures(option) {
+    let other = regex::Regex::new(r"[\[\{](\d+)(.+)[\}\]]").unwrap();
+    if let Some(c) = em.captures(option).or(other.captures(option)) {
         let value = c.get(1).unwrap().as_str();
         let units = c.get(2).unwrap().as_str();
         match units {
