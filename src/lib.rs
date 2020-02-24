@@ -669,9 +669,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             }
                         } else if name == "{wrapfigure}" {
                             let align = argument(latex);
-                            latex = &latex[align.len()..i];
+                            latex = &latex[align.len()..];
                             let width = argument(latex);
-                            latex = &latex[width.len()..i];
+                            latex = &latex[width.len()..];
                             let width = parse_width(width);
                             if let Some(i) = latex.find(r"\end{wrapfigure}") {
                                 if latex.starts_with(r"\centering ")
@@ -687,7 +687,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                     fmt.write_all(b">")?;
                                     html_paragraph(fmt, &latex[..i])?;
                                 }
-                                fmt.write_all(b"</wrapfigure>")?;
+                                fmt.write_all(b"</figure>")?;
                                 latex = &latex[i + br"\end{wrapfigure}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{wrapfigure}</span>"#)?;

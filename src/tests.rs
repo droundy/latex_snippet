@@ -282,6 +282,14 @@ fn figure() {
 }
 
 #[test]
+fn wrapfigure() {
+    assert_eq!(
+        r#"hello<figure class="float-sm-right">foo</figure>"#,
+        &html_string(r"hello\begin{wrapfigure}{r}{10em}foo\end{wrapfigure}")
+    );
+}
+
+#[test]
 fn figure_with_caption() {
     assert_eq!(
         "hello<figure>foo<figcaption>hello</figcaption></figure>",
