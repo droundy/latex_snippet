@@ -245,7 +245,7 @@ fn curly_braces() {
 #[test]
 fn includegraphics() {
     assert_eq!(
-        r#"hello<img class="img-fluid" src="filename"/>foo"#,
+        r#"hello<img src="filename"/>foo"#,
         &html_string(r"hello\includegraphics[width=\columnwidth]{filename}foo")
     );
 }
@@ -253,7 +253,7 @@ fn includegraphics() {
 #[test]
 fn includegraphics_width() {
     assert_eq!(
-        r#"hello<img class="img-fluid" style="width:30em" src="filename"/>"#,
+        r#"hello<img style="width:30em" src="filename"/>"#,
         &html_string(r"hello\includegraphics[width=30em]{filename}")
     );
 }

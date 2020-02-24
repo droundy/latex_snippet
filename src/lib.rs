@@ -525,7 +525,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
                         } else {
-                            fmt.write_all(br#"<img class="img-fluid""#)?;
+                            fmt.write_all(br#"<img"#)?;
                             fmt.write_all(width.as_bytes())?;
                             fmt.write_all(br#" src=""#)?;
                             fmt_as_html(fmt, &arg[1..arg.len() - 1])?;
