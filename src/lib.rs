@@ -175,6 +175,37 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
     fmt.write_all(latex.as_bytes())
 }
 
+/// This just does simple textual formatting
+fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
+    if latex.contains("amp#x7b;") || latex.contains("amp#x7d;") {
+        return fmt_as_html(
+            fmt,
+            &latex.replace("amp#x7b;", r"\{").replace("amp#x7d;", r"\}"),
+        );
+    }
+
+    while let Some((start, end)) = find_next_quoting(latex) {
+        fmt.write_all(latex[..start].as_bytes())?;
+        let needs_quote = &latex[start..end];
+        latex = &latex[end..];
+        fmt.write_all(
+            match needs_quote { // needs_quote is constrained by needs_quoting_at_start above.
+                "<" => "&lt;",
+                ">" => "&gt;",
+                "&" => "&amp;",
+                "\"" => "&quot;",
+                "'" => "&#x27;",
+                "/" => "&#x2f;",
+                "``" => "“",
+                "''" => "''",
+                _ => panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote),
+            }
+            .as_bytes(),
+        )?;
+    }
+    fmt.write_all(latex.as_bytes())
+}
+
 #[test]
 fn test_fmt_double_quotes() {
     let mut s: Vec<u8> = Vec::new();
@@ -641,7 +672,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     r"\(" => {
                         if let Some(i) = latex.find(r"\)") {
                             fmt.write_all(br"\(")?;
-                            fmt_as_html(fmt, &latex[..i + 2])?;
+                            fmt_math_as_html(fmt, &latex[..i + 2])?;
                             latex = &latex[i + 2..];
                         } else {
                             fmt_error(fmt, r"\(")?;
@@ -650,7 +681,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     r"\[" => {
                         if let Some(i) = latex.find(r"\]") {
                             fmt.write_all(br"\[")?;
-                            fmt_as_html(fmt, &latex[..i + 2])?;
+                            fmt_math_as_html(fmt, &latex[..i + 2])?;
                             latex = &latex[i + 2..];
                         } else {
                             fmt_error(fmt, r"\(")?;
@@ -788,7 +819,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             } else {
                                 fmt.write_all(br#"\begin"#)?;
                                 fmt_as_html(fmt, name)?;
-                                fmt_as_html(fmt, env)?;
+                                fmt_math_as_html(fmt, env)?;
                             }
                         } else if name == "{itemize}" {
                             fmt.write_all(b"<ul>")?;
@@ -889,7 +920,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         // It is a $$ actually
                         if let Some(i) = latex[2..].find("$$") {
                             fmt.write_all(br"\[")?;
-                            fmt_as_html(fmt, &latex[2..i + 2])?;
+                            fmt_math_as_html(fmt, &latex[2..i + 2])?;
                             fmt.write_all(br"\]")?;
                             latex = &latex[i + 4..];
                         } else {
@@ -898,7 +929,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         }
                     } else {
                         fmt.write_all(br"\(")?;
-                        fmt_as_html(fmt, &latex[1..i + 1])?;
+                        fmt_math_as_html(fmt, &latex[1..i + 1])?;
                         fmt.write_all(br"\)")?;
                         latex = &latex[i + 2..];
                     }
