@@ -928,9 +928,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             latex = &latex[2..];
                         }
                     } else {
-                        fmt.write_all(br"\(")?;
+                        fmt.write_all(br"\(xx")?;
                         fmt_math_as_html(fmt, &latex[1..i + 1])?;
-                        fmt.write_all(br"\)")?;
+                        fmt.write_all(br"xx\)")?;
                         latex = &latex[i + 2..];
                     }
                 } else {
