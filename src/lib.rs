@@ -178,7 +178,7 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
 /// This just does simple textual formatting
 fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std::io::Error> {
     if latex.contains("amp#x7b;") || latex.contains("amp#x7d;") {
-        return fmt_as_html(
+        return fmt_math_as_html(
             fmt,
             &latex.replace("amp#x7b;", r"\{").replace("amp#x7d;", r"\}"),
         );
