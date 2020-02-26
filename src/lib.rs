@@ -196,7 +196,7 @@ fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
                 "\"" => "&quot;",
                 "'" => "&#x27;",
                 "/" => "&#x2f;",
-                "``" => "“",
+                "``" => "``",
                 "''" => "''",
                 _ => panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote),
             }
@@ -928,9 +928,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             latex = &latex[2..];
                         }
                     } else {
-                        fmt.write_all(br"\(xx")?;
+                        fmt.write_all(br"\(")?;
                         fmt_math_as_html(fmt, &latex[1..i + 1])?;
-                        fmt.write_all(br"xx\)")?;
+                        fmt.write_all(br"\)")?;
                         latex = &latex[i + 2..];
                     }
                 } else {
