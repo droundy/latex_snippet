@@ -53,6 +53,23 @@ pub fn html_string(latex: &str) -> String {
     String::from_utf8(s).expect("should be no problem with utf8 conversion")
 }
 
+macro_rules! ffi_str {
+    ($mkstr:expr) => {
+        |s: *const std::os::raw::c_char| -> *const std::os::raw::c_char  {
+            if s.is_null() {
+                return std::ptr::null();
+            }
+            let c_str = unsafe { std::ffi::CStr::from_ptr(s) };
+            if let Ok(my_str) = c_str.to_str() {
+                let output = $mkstr(my_str);
+                std::ffi::CString::new(output).unwrap().into_raw()
+            } else {
+                std::ptr::null()
+            }
+        }
+    };
+}
+
 /// Convert some LaTeX into an HTML `String`.
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
@@ -61,12 +78,24 @@ pub fn html_with_solution(latex: &str) -> String {
     html_string(&include_solutions(&physics_macros(latex)))
 }
 
+/// A version of html_with_solution suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn latex_to_html_with_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { html_string(&include_solutions(&physics_macros(latex))) })(s)
+}
+
 /// Convert some LaTeX into an HTML `String`.
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn html_omit_solution(latex: &str) -> String {
     set_panic_hook();
     html_string(&omit_solutions(&physics_macros(latex)))
+}
+
+/// A version of html_with_solution suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn latex_to_html_omit_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { html_string(&omit_solutions(&physics_macros(latex))) })(s)
 }
 
 /// Convert some LaTeX into an HTML `String`, including figures.
