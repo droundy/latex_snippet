@@ -253,6 +253,14 @@ fn includegraphics() {
 }
 
 #[test]
+fn includegraphics_width() {
+    assert_eq!(
+        r#"hello<img style="width:30em" src="filename"/>"#,
+        &html_string(r"hello\includegraphics[width=30em]{filename}")
+    );
+}
+
+#[test]
 fn figure() {
     assert_eq!(
         "hello<figure>foo</figure>",
@@ -272,6 +280,14 @@ fn figure() {
     assert_eq!(
         r#"hello<figure> <div class="center">foo</div></figure>"#,
         &html_string(r"hello\begin{figure} \centering foo\end{figure}")
+    );
+}
+
+#[test]
+fn wrapfigure() {
+    assert_eq!(
+        r#"hello<figure class="wrapfigure" style="width:10em">foo</figure>"#,
+        &html_string(r"hello\begin{wrapfigure}{r}{10em}foo\end{wrapfigure}")
     );
 }
 

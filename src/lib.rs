@@ -549,13 +549,16 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     }
                     r"\includegraphics" => {
                         let opt = optional_argument(latex);
+                        let width = parse_width(opt);
                         latex = &latex[opt.len()..];
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\includegraphics{</span>"#)?;
                         } else {
-                            fmt.write_all(br#"<img src=""#)?;
+                            fmt.write_all(br#"<img"#)?;
+                            fmt.write_all(width.as_bytes())?;
+                            fmt.write_all(br#" src=""#)?;
                             fmt_as_html(fmt, &arg[1..arg.len() - 1])?;
                             fmt.write_all(br#""/>"#)?;
                         }
@@ -694,6 +697,31 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 latex = &latex[i + br"\end{figure}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{figure}</span>"#)?;
+                            }
+                        } else if name == "{wrapfigure}" {
+                            let align = argument(latex);
+                            latex = &latex[align.len()..];
+                            let width = argument(latex);
+                            latex = &latex[width.len()..];
+                            let width = parse_width(width);
+                            if let Some(i) = latex.find(r"\end{wrapfigure}") {
+                                if latex.starts_with(r"\centering ")
+                                    || latex.starts_with(r"\centering\n")
+                                {
+                                    fmt.write_all(br#"<figure class="wrapfigure center""#)?;
+                                    fmt.write_all(width.as_bytes())?;
+                                    fmt.write_all(b">")?;
+                                    html_paragraph(fmt, &latex[r"\centering ".len()..i])?;
+                                } else {
+                                    fmt.write_all(br#"<figure class="wrapfigure""#)?;
+                                    fmt.write_all(width.as_bytes())?;
+                                    fmt.write_all(b">")?;
+                                    html_paragraph(fmt, &latex[..i])?;
+                                }
+                                fmt.write_all(b"</figure>")?;
+                                latex = &latex[i + br"\end{wrapfigure}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{wrapfigure}</span>"#)?;
                             }
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
@@ -1087,6 +1115,23 @@ fn optional_argument(latex: &str) -> &str {
     } else {
         ""
     }
+}
+
+/// Returns the class to be used
+fn parse_width(option: &str) -> String {
+    let em = regex::Regex::new(r"[\[\{]width=(\d+)(.+)[\}\]]").unwrap();
+    let other = regex::Regex::new(r"[\[\{](\d+)(.+)[\}\]]").unwrap();
+    if let Some(c) = em.captures(option).or(other.captures(option)) {
+        let value = c.get(1).unwrap().as_str();
+        let units = c.get(2).unwrap().as_str();
+        match units {
+            "em" | "ex" | "cm" | "in" | "mm" | "pt" => {
+                return format!(r#" style="width:{}{}""#, value, units);
+            }
+            _ => ()
+        }
+    }
+    return "".to_string();
 }
 
 fn parse_title(latex: &str) -> &str {
