@@ -235,6 +235,8 @@ foo
 #[test]
 fn quotes() {
     assert_eq!(r#"foo “bar” baz"#, &html_string(r"foo ``bar'' baz"));
+    assert_eq!(r#"\(a''\)"#, &html_string(r"$a''$"));
+    assert_eq!(r#"\begin{align}a''\end{align}"#, &html_string(r"\begin{align}a''\end{align}"));
 }
 
 #[test]
