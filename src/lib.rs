@@ -75,13 +75,13 @@ macro_rules! ffi_str {
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_solution(latex: &str) -> String {
     set_panic_hook();
-    html_string(&include_solutions(&physics_macros(latex)))
+    html_string(&physics_macros(latex))
 }
 
 /// A version of html_with_solution suitable for export to C and python.
 #[no_mangle]
 pub extern "C" fn latex_to_html_with_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
-    ffi_str!(|latex| { html_string(&include_solutions(&physics_macros(latex))) })(s)
+    ffi_str!(|latex| { html_string(&physics_macros(latex)) })(s)
 }
 
 /// Convert some LaTeX into an HTML `String`.
@@ -103,7 +103,7 @@ pub extern "C" fn latex_to_html_omit_solution(s: *const std::os::raw::c_char) ->
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> String {
     set_panic_hook();
-    html_string(&include_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
+    html_string(&with_image_directory(&physics_macros(latex), figure_directory))
 }
 
 /// Convert some LaTeX into an HTML `String`, including figures.
@@ -754,9 +754,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             }
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
-                                fmt.write_all(br#"<div class="solution"><h5>Solution:</h5>"#)?;
+                                fmt.write_all(br#"<blockquote class="solution"><h5>Solution</h5>"#)?;
                                 html_subsubsection(fmt, &latex[..i])?;
-                                fmt.write_all(b"</div>")?;
+                                fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{solution}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{solution}</span>"#)?;
@@ -1437,14 +1437,14 @@ pub fn include_solutions(mut latex: &str) -> String {
             refined.push_str(&latex[..i]);
             latex = &latex[i + r"\begin{solution}".len()..];
 
-            refined.push_str(r"\paragraph*{Solution}{\it ");
+            refined.push_str(r"\begin{quotation}\paragraph*{Solution}");
             if let Some(i) = latex.find(r"\end{solution}") {
                 refined.push_str(&latex[..i]);
-                refined.push_str("}\n\n");
+                refined.push_str(r"\end{quotation}");
                 latex = &latex[i + r"\end{solution}".len()..];
             } else {
                 refined.push_str(latex);
-                refined.push_str("}");
+                refined.push_str(r"\end{quotation}");
                 break;
             }
         } else {
@@ -1479,7 +1479,6 @@ pub fn omit_solutions(mut latex: &str) -> String {
 /// Process `\includegraphics` with the specified image directory.
 pub fn with_image_directory(mut latex: &str, img_dir: &str) -> String {
     let mut refined = String::with_capacity(latex.len());
-    // need to strip out solutions...
     loop {
         if let Some(i) = latex.find(r"\includegraphics[") {
             refined.push_str(&latex[..i]);

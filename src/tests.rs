@@ -163,11 +163,9 @@ fn includesolutions() {
     assert_eq!(
         r#"
 hello
-\paragraph*{Solution}{\it 
+\begin{quotation}\paragraph*{Solution}
 the solution is here
-}
-
-
+\end{quotation}
 foo"#,
         &include_solutions(
             r"
@@ -182,11 +180,9 @@ foo"
     assert_eq!(
         r#"
 hello
-\paragraph*{Solution}{\it 
+\begin{quotation}\paragraph*{Solution}
 the solution is here
-}
-
-"#,
+\end{quotation}"#,
         &include_solutions(
             r"
 hello
@@ -198,11 +194,9 @@ the solution is here
 
     assert_eq!(
         r#"
-\paragraph*{Solution}{\it 
+\begin{quotation}\paragraph*{Solution}
 foo
-}
-
-"#,
+\end{quotation}"#,
         &include_solutions(
             r"
 \begin{solution}
@@ -212,28 +206,36 @@ foo
     );
 
     assert_eq!(
-        r#"<h5>Solution</h5>foo
-"#,
+        r#"<section><h4>Solution</h4>
+foobar
+</section>"#,
         &html_string(
-            r"\paragraph*{Solution}
-foo
+            r"\subsubsection*{Solution}
+foobar
 "
         )
     );
 
     assert_eq!(
-        r#"
-<h5>Solution</h5><i>
+        r#"<blockquote class="solution"><h5>Solution</h5>
 foo
-</i>
-
-"#,
-        &html_string(&include_solutions(
-            r"
-\begin{solution}
+</blockquote>"#,
+        &html_string(
+            r"\begin{solution}
 foo
 \end{solution}"
-        ))
+        )
+    );
+
+    assert_eq!(
+        r#"<blockquote class="solution"><h5>Solution</h5><p>foo
+</p></blockquote>"#,
+        &html_string(
+            r"\begin{solution}
+
+foo
+\end{solution}"
+        )
     );
 }
 
