@@ -1205,9 +1205,9 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[i + r"\ket".len()..];
         let arg = argument(latex);
         latex = &latex[arg.len()..];
-        refined.push_str("|");
+        refined.push_str(r"\left|");
         refined.push_str(&physics_macros(arg));
-        refined.push_str(r"\rangle ");
+        refined.push_str(r"\right\rangle ");
     }
     refined.push_str(latex);
     latex = &refined;
@@ -1218,9 +1218,18 @@ pub fn physics_macros(latex: &str) -> String {
         latex = &latex[i + r"\bra".len()..];
         let arg = argument(latex);
         latex = &latex[arg.len()..];
-        refined.push_str(r"\langle ");
+        refined.push_str(r"\left\langle ");
         refined.push_str(&physics_macros(arg));
-        refined.push_str(r"|");
+        refined.push_str(r"\right|");
+    }
+    refined.push_str(latex);
+    latex = &refined;
+
+    let mut refined = String::with_capacity(latex.len());
+    while let Some(i) = latex.find(r"\right|\left|") {
+        refined.push_str(&latex[..i]);
+        latex = &latex[i + r"\right|\left|".len()..];
+        refined.push_str(r"\middle|");
     }
     refined.push_str(latex);
     latex = &refined;

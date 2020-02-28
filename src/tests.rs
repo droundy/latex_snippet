@@ -4,9 +4,9 @@ use super::*;
 fn test_physics_macros() {
     assert_eq!(
         r"
-\langle {foo}|
+\left\langle {foo}\right|
 bar
-|{baz}\rangle 
+\left|{baz}\right\rangle 
 
 {d\hspace{-0.28em}\bar{}} X
 
@@ -29,6 +29,11 @@ bar
 
 "
         )
+    );
+
+    assert_eq!(
+        r"  \left\langle {1}\middle|{0}\right\rangle   ",
+        &physics_macros(r"  \bra{1}\ket{0}  ")
     );
 }
 
