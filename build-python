@@ -20,5 +20,5 @@ mv -v python-module/*/latex_snippet python-module/
 
 if test -e ../paradigms; then
     rm -rf ../paradigms/admin_app/templatetags/latex_snippet
-    cp -av python-module/latex_snippet ../paradigms/admin_app/templatetags/
+    cp -av python-module/latex_snippet ../paradigms/
 fi
