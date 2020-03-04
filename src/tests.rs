@@ -399,6 +399,18 @@ fn line_break() {
 }
 
 #[test]
+fn windows_newlines() {
+    assert_eq!(
+        "<p>Hello world\r\n\r\n</p><p>New paragraph</p>",
+        &html_string("Hello world\r\n\r\nNew paragraph")
+    );
+    assert_eq!(
+        "<p>Hello world\n\n</p><p>New paragraph</p>",
+        &html_string("Hello world\n\nNew paragraph")
+    );
+}
+
+#[test]
 fn paragraphs() {
     assert_eq!(
         r"<p>The first paragraph

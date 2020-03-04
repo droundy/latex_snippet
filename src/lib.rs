@@ -1012,6 +1012,16 @@ fn earlier(a: Option<usize>, b: Option<usize>) -> bool {
     }
 }
 
+fn find_paragraph(latex: &str) -> Option<usize> {
+    let next_paragraph = latex.find("\n\n");
+    let next_windows = latex.find("\r\n\r\n");
+    if earlier(next_paragraph, next_windows) {
+        next_paragraph
+    } else {
+        next_windows
+    }
+}
+
 fn finish_paragraph(latex: &str) -> &str {
     if latex.len() == 0 {
         return "";
@@ -1019,7 +1029,7 @@ fn finish_paragraph(latex: &str) -> &str {
     let mut so_far = 0;
     let mut nestedness = 0;
     loop {
-        let next_paragraph = latex[so_far..].find("\n\n");
+        let next_paragraph = find_paragraph(&latex[so_far..]);
         let next_end = latex[so_far..].find(r"\end{");
         let next_begin = latex[so_far..].find(r"\begin{");
         if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
@@ -1027,7 +1037,7 @@ fn finish_paragraph(latex: &str) -> &str {
                 if let Some(i) = next_paragraph {
                     so_far += i;
                     while latex.len() > so_far + 1
-                        && latex[so_far + 1..].chars().next() == Some('\n')
+                        && [Some('\n'), Some('\r')].contains(&latex[so_far + 1..].chars().next())
                     {
                         so_far += 1;
                     }
