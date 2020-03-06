@@ -405,6 +405,10 @@ fn windows_newlines() {
         &html_string("Hello world\r\n\r\nNew paragraph")
     );
     assert_eq!(
+        "<p>Hello world\r\n  \r\n</p><p>New paragraph</p>",
+        &html_string("Hello world\r\n  \r\nNew paragraph")
+    );
+    assert_eq!(
         "<p>Hello world\n\n</p><p>New paragraph</p>",
         &html_string("Hello world\n\nNew paragraph")
     );

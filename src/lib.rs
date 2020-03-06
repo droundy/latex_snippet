@@ -1013,13 +1013,20 @@ fn earlier(a: Option<usize>, b: Option<usize>) -> bool {
 }
 
 fn find_paragraph(latex: &str) -> Option<usize> {
-    let next_paragraph = latex.find("\n\n");
-    let next_windows = latex.find("\r\n\r\n");
-    if earlier(next_paragraph, next_windows) {
-        next_paragraph
-    } else {
-        next_windows
-    }
+    let paragraph = regex::Regex::new("\n\\s*\n").unwrap();
+    paragraph.find(latex).map(|m| m.end())
+}
+
+#[test]
+fn test_find_paragraph() {
+    assert_eq!(Some(3), find_paragraph("\n\n\nHello world"));
+    assert_eq!(Some(5), find_paragraph("\n\n\n\r\nHello world"));
+}
+#[test]
+fn test_finish_paragraph() {
+    assert_eq!("\n\n\n", finish_paragraph("\n\n\nHello world"));
+    assert_eq!("\n\n\n\r\n", finish_paragraph("\n\n\n\r\nHello world"));
+    assert_eq!("\nFirst me\n\n\n\r\n", finish_paragraph("\nFirst me\n\n\n\r\nHello world"));
 }
 
 fn finish_paragraph(latex: &str) -> &str {
@@ -1035,13 +1042,7 @@ fn finish_paragraph(latex: &str) -> &str {
         if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
             if nestedness == 0 {
                 if let Some(i) = next_paragraph {
-                    so_far += i;
-                    while latex.len() > so_far + 1
-                        && [Some('\n'), Some('\r')].contains(&latex[so_far + 1..].chars().next())
-                    {
-                        so_far += 1;
-                    }
-                    return &latex[..so_far + 1];
+                    return &latex[..i];
                 } else {
                     // There is no end to this
                     return latex;
