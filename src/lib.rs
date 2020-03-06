@@ -1024,6 +1024,16 @@ fn test_find_paragraph() {
 }
 #[test]
 fn test_finish_paragraph() {
+    assert_eq!(r"\begin{center}
+contents
+\end{center}
+
+",
+               finish_paragraph(r"\begin{center}
+contents
+\end{center}
+
+"));
     assert_eq!("\n\n\n", finish_paragraph("\n\n\nHello world"));
     assert_eq!("\n\n\n\r\n", finish_paragraph("\n\n\n\r\nHello world"));
     assert_eq!("\nFirst me\n\n\n\r\n", finish_paragraph("\nFirst me\n\n\n\r\nHello world"));
@@ -1042,7 +1052,7 @@ fn finish_paragraph(latex: &str) -> &str {
         if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
             if nestedness == 0 {
                 if let Some(i) = next_paragraph {
-                    return &latex[..i];
+                    return &latex[..so_far + i];
                 } else {
                     // There is no end to this
                     return latex;

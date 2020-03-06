@@ -682,3 +682,14 @@ fn test_itemize_broken() {
 ")
     );
 }
+
+#[test]
+fn paragraph_end_after_environment() {
+    assert_eq!(
+        "<div class=\"center\">\ncontents\n</div>\n\n",
+        &html_string(r"\begin{center}
+contents
+\end{center}
+
+"));
+}
