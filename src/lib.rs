@@ -754,7 +754,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             }
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
-                                fmt.write_all(br#"<blockquote class="solution"><h5>Solution</h5>"#)?;
+                                fmt.write_all(br#"<blockquote class="solution">"#)?;
                                 html_subsubsection(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{solution}".len()..];

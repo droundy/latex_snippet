@@ -217,7 +217,7 @@ foobar
     );
 
     assert_eq!(
-        r#"<blockquote class="solution"><h5>Solution</h5>
+        r#"<blockquote class="solution">
 foo
 </blockquote>"#,
         &html_string(
@@ -228,7 +228,7 @@ foo
     );
 
     assert_eq!(
-        r#"<blockquote class="solution"><h5>Solution</h5><p>foo
+        r#"<blockquote class="solution"><p>foo
 </p></blockquote>"#,
         &html_string(
             r"\begin{solution}
