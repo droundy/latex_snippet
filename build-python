@@ -17,8 +17,3 @@ rm -rf python-module
 python3 -m wheel unpack --dest python-module target/wheels/latex_snippet-*.whl
 
 mv -v python-module/*/latex_snippet python-module/
-
-if test -e ../paradigms; then
-    rm -rf ../paradigms/latex_snippet
-    cp -av python-module/latex_snippet ../paradigms/
-fi

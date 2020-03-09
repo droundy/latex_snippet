@@ -754,7 +754,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             }
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
-                                fmt.write_all(br#"<blockquote class="solution"><h5>Solution</h5>"#)?;
+                                fmt.write_all(br#"<blockquote class="solution">"#)?;
                                 html_subsubsection(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{solution}".len()..];
@@ -1012,6 +1012,33 @@ fn earlier(a: Option<usize>, b: Option<usize>) -> bool {
     }
 }
 
+fn find_paragraph(latex: &str) -> Option<usize> {
+    let paragraph = regex::Regex::new("\n\\s*\n").unwrap();
+    paragraph.find(latex).map(|m| m.end())
+}
+
+#[test]
+fn test_find_paragraph() {
+    assert_eq!(Some(3), find_paragraph("\n\n\nHello world"));
+    assert_eq!(Some(5), find_paragraph("\n\n\n\r\nHello world"));
+}
+#[test]
+fn test_finish_paragraph() {
+    assert_eq!(r"\begin{center}
+contents
+\end{center}
+
+",
+               finish_paragraph(r"\begin{center}
+contents
+\end{center}
+
+"));
+    assert_eq!("\n\n\n", finish_paragraph("\n\n\nHello world"));
+    assert_eq!("\n\n\n\r\n", finish_paragraph("\n\n\n\r\nHello world"));
+    assert_eq!("\nFirst me\n\n\n\r\n", finish_paragraph("\nFirst me\n\n\n\r\nHello world"));
+}
+
 fn finish_paragraph(latex: &str) -> &str {
     if latex.len() == 0 {
         return "";
@@ -1019,19 +1046,13 @@ fn finish_paragraph(latex: &str) -> &str {
     let mut so_far = 0;
     let mut nestedness = 0;
     loop {
-        let next_paragraph = latex[so_far..].find("\n\n");
+        let next_paragraph = find_paragraph(&latex[so_far..]);
         let next_end = latex[so_far..].find(r"\end{");
         let next_begin = latex[so_far..].find(r"\begin{");
         if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
             if nestedness == 0 {
                 if let Some(i) = next_paragraph {
-                    so_far += i;
-                    while latex.len() > so_far + 1
-                        && latex[so_far + 1..].chars().next() == Some('\n')
-                    {
-                        so_far += 1;
-                    }
-                    return &latex[..so_far + 1];
+                    return &latex[..so_far + i];
                 } else {
                     // There is no end to this
                     return latex;

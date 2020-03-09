@@ -217,7 +217,7 @@ foobar
     );
 
     assert_eq!(
-        r#"<blockquote class="solution"><h5>Solution</h5>
+        r#"<blockquote class="solution">
 foo
 </blockquote>"#,
         &html_string(
@@ -228,7 +228,7 @@ foo
     );
 
     assert_eq!(
-        r#"<blockquote class="solution"><h5>Solution</h5><p>foo
+        r#"<blockquote class="solution"><p>foo
 </p></blockquote>"#,
         &html_string(
             r"\begin{solution}
@@ -395,6 +395,22 @@ fn line_break() {
     assert_eq!(
         r"Hello world<br/>this is a new line",
         &html_string(r"Hello world\\this is a new line")
+    );
+}
+
+#[test]
+fn windows_newlines() {
+    assert_eq!(
+        "<p>Hello world\r\n\r\n</p><p>New paragraph</p>",
+        &html_string("Hello world\r\n\r\nNew paragraph")
+    );
+    assert_eq!(
+        "<p>Hello world\r\n  \r\n</p><p>New paragraph</p>",
+        &html_string("Hello world\r\n  \r\nNew paragraph")
+    );
+    assert_eq!(
+        "<p>Hello world\n\n</p><p>New paragraph</p>",
+        &html_string("Hello world\n\nNew paragraph")
     );
 }
 
@@ -665,4 +681,15 @@ fn test_itemize_broken() {
 \begin{itemize}
 ")
     );
+}
+
+#[test]
+fn paragraph_end_after_environment() {
+    assert_eq!(
+        "<div class=\"center\">\ncontents\n</div>\n\n",
+        &html_string(r"\begin{center}
+contents
+\end{center}
+
+"));
 }

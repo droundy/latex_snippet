@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.6"      # current default Python on Travis CI
+  - "3.7"
+  - "3.8"
+
+before_install:
+  - curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --profile=minimal -y
+  - export PATH=$HOME/.cargo/bin:$PATH
+install:
+  - pip install -r requirements.txt
+script:
+  - cargo test
