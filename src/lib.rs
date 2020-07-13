@@ -55,7 +55,7 @@ pub fn html_string(latex: &str) -> String {
 
 macro_rules! ffi_str {
     ($mkstr:expr) => {
-        |s: *const std::os::raw::c_char| -> *const std::os::raw::c_char  {
+        |s: *const std::os::raw::c_char| -> *const std::os::raw::c_char {
             if s.is_null() {
                 return std::ptr::null();
             }
@@ -80,7 +80,9 @@ pub fn html_with_solution(latex: &str) -> String {
 
 /// A version of html_with_solution suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn latex_to_html_with_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+pub extern "C" fn latex_to_html_with_solution(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { html_string(&physics_macros(latex)) })(s)
 }
 
@@ -94,7 +96,9 @@ pub fn html_omit_solution(latex: &str) -> String {
 
 /// A version of html_with_solution suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn latex_to_html_omit_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+pub extern "C" fn latex_to_html_omit_solution(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { html_string(&omit_solutions(&physics_macros(latex))) })(s)
 }
 
@@ -103,7 +107,10 @@ pub extern "C" fn latex_to_html_omit_solution(s: *const std::os::raw::c_char) ->
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> String {
     set_panic_hook();
-    html_string(&with_image_directory(&physics_macros(latex), figure_directory))
+    html_string(&with_image_directory(
+        &physics_macros(latex),
+        figure_directory,
+    ))
 }
 
 /// Convert some LaTeX into an HTML `String`, including figures.
@@ -111,7 +118,10 @@ pub fn html_with_figures_and_solution(latex: &str, figure_directory: &str) -> St
 #[cfg(target_arch = "wasm32")]
 pub fn html_with_figures_omit_solution(latex: &str, figure_directory: &str) -> String {
     set_panic_hook();
-    html_string(&omit_solutions(&with_image_directory(&physics_macros(latex), figure_directory)))
+    html_string(&omit_solutions(&with_image_directory(
+        &physics_macros(latex),
+        figure_directory,
+    )))
 }
 
 fn needs_quoting_at_start(x: &str) -> Option<usize> {
@@ -158,7 +168,8 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
         fmt.write_all(
-            match needs_quote { // needs_quote is constrained by needs_quoting_at_start above.
+            match needs_quote {
+                // needs_quote is constrained by needs_quoting_at_start above.
                 "<" => "&lt;",
                 ">" => "&gt;",
                 "&" => "&amp;",
@@ -189,7 +200,8 @@ fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
         fmt.write_all(
-            match needs_quote { // needs_quote is constrained by needs_quoting_at_start above.
+            match needs_quote {
+                // needs_quote is constrained by needs_quoting_at_start above.
                 "<" => "&lt;",
                 ">" => "&gt;",
                 "&" => "&amp;",
@@ -545,7 +557,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         let url = process_url_argument(arg);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
-                            fmt.write_all(br#"<span class="error" data-error="bad-argument">\url{</span>"#)?;
+                            fmt.write_all(
+                                br#"<span class="error" data-error="bad-argument">\url{</span>"#,
+                            )?;
                         } else {
                             fmt.write_all(b"<a href=\"")?;
                             fmt.write_all(url.as_bytes())?;
@@ -838,6 +852,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                         latex = &latex[r"\end{itemize}".len()..];
                                         fmt.write_all(b"</ul>")?;
                                         break;
+                                    } else if latex.starts_with(r"\end{description}") {
+                                        latex = &latex[r"\end{description}".len()..];
+                                        fmt.write_all(
+                                            br#"</ol><span class="error">\end{enumerate}</span>"#,
+                                        )?;
+                                        break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
                                         fmt.write_all(
@@ -879,6 +899,12 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                             br#"</ol><span class="error">\end{enumerate}</span>"#,
                                         )?;
                                         break;
+                                    } else if latex.starts_with(r"\end{description}") {
+                                        latex = &latex[r"\end{description}".len()..];
+                                        fmt.write_all(
+                                            br#"</ol><span class="error">\end{enumerate}</span>"#,
+                                        )?;
+                                        break;
                                     } else if latex.starts_with(r"\end{enumerate}") {
                                         latex = &latex[r"\end{enumerate}".len()..];
                                         fmt.write_all(b"</ol>")?;
@@ -897,6 +923,60 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                     fmt.write_all(b"<li>")?;
                                     html(fmt, li)?;
                                     fmt.write_all(b"</li>")?;
+                                }
+                            }
+                        } else if name == "{description}" {
+                            fmt.write_all(b"<dl>")?;
+                            let li = finish_item(latex);
+                            latex = &latex[li.len()..];
+                            if li.trim().len() > 0 {
+                                // Nothing should precede the first
+                                // \item except whitespace.
+                                fmt_error(fmt, li)?;
+                            }
+                            loop {
+                                let li = finish_item(latex);
+                                latex = &latex[li.len()..];
+                                if li.len() == 0 {
+                                    if latex.starts_with(r"\end{itemize}") {
+                                        latex = &latex[r"\end{itemize}".len()..];
+                                        fmt.write_all(
+                                            br#"</ol><span class="error">\end{description}</span>"#,
+                                        )?;
+                                        break;
+                                    } else if latex.starts_with(r"\end{enumerate}") {
+                                        latex = &latex[r"\end{enumerate}".len()..];
+                                        fmt.write_all(
+                                            br#"</dl><span class="error">\end{description}</span>"#,
+                                        )?;
+                                        break;
+                                    } else if latex.starts_with(r"\end{description}") {
+                                        latex = &latex[r"\end{description}".len()..];
+                                        fmt.write_all(b"</dl>")?;
+                                        break;
+                                    } else if latex.starts_with(r"\item") {
+                                        // It must start with \item
+                                        latex = &latex[r"\item".len()..];
+                                        latex = finish_standalone_macro(latex);
+                                    } else {
+                                        fmt.write_all(
+                                            br#"</dl><span class="error">MISSING \end{description}</span>"#,
+                                        )?;
+                                        break;
+                                    }
+                                } else {
+                                    println!("latex starts {}", &li[..5]);
+                                    let o = optional_argument(li);
+                                    let li = &li[o.len()..];
+                                    if o.len() > 2 {
+                                        fmt.write_all(b"<dt>")?;
+                                        html(fmt, &o[1..o.len() - 1])?;
+                                        fmt.write_all(b"</dt>")?;
+                                    }
+
+                                    fmt.write_all(b"<dd>")?;
+                                    html(fmt, li)?;
+                                    fmt.write_all(b"</dd>")?;
                                 }
                             }
                         } else {
@@ -1024,19 +1104,26 @@ fn test_find_paragraph() {
 }
 #[test]
 fn test_finish_paragraph() {
-    assert_eq!(r"\begin{center}
+    assert_eq!(
+        r"\begin{center}
 contents
 \end{center}
 
 ",
-               finish_paragraph(r"\begin{center}
+        finish_paragraph(
+            r"\begin{center}
 contents
 \end{center}
 
-"));
+"
+        )
+    );
     assert_eq!("\n\n\n", finish_paragraph("\n\n\nHello world"));
     assert_eq!("\n\n\n\r\n", finish_paragraph("\n\n\n\r\nHello world"));
-    assert_eq!("\nFirst me\n\n\n\r\n", finish_paragraph("\nFirst me\n\n\n\r\nHello world"));
+    assert_eq!(
+        "\nFirst me\n\n\n\r\n",
+        finish_paragraph("\nFirst me\n\n\n\r\nHello world")
+    );
 }
 
 fn finish_paragraph(latex: &str) -> &str {
@@ -1080,8 +1167,8 @@ fn finish_item(latex: &str) -> &str {
     if latex.len() == 0 {
         return "";
     }
-    let end_list = regex::Regex::new(r"\\end\{(itemize|enumerate)\}").unwrap();
-    let begin_list = regex::Regex::new(r"\\begin\{(itemize|enumerate)\}").unwrap();
+    let end_list = regex::Regex::new(r"\\end\{(itemize|enumerate|description)\}").unwrap();
+    let begin_list = regex::Regex::new(r"\\begin\{(itemize|enumerate|description)\}").unwrap();
     let mut so_far = 0;
     let mut nestedness = 0;
     loop {
@@ -1178,7 +1265,7 @@ fn parse_width(option: &str) -> String {
             "em" | "ex" | "cm" | "in" | "mm" | "pt" => {
                 return format!(r#" style="width:{}{}""#, value, units);
             }
-            _ => ()
+            _ => (),
         }
     }
     return "".to_string();
@@ -1319,6 +1406,7 @@ pub fn check_latex(latex: &str) -> String {
     let good_environments: &[&'static str] = &[
         "solution",
         "enumerate",
+        "description",
         "equation",
         "equation*",
         "align",
@@ -1537,8 +1625,6 @@ pub fn with_image_directory(mut latex: &str, img_dir: &str) -> String {
     }
     refined
 }
-
-
 
 // The following are wasm-specific
 

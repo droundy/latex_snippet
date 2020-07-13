@@ -542,6 +542,41 @@ some more stuff
 }
 
 #[test]
+fn definition() {
+    assert_eq!(
+        r#"
+<dl><span class="error">
+buggy
+</span><dt>tasty</dt><dd> Apples
+</dd><dt>nice</dt><dd> Oranges
+</dd><dt>good for you</dt><dd> Vegetables
+<ol><li>Carrots
+</li><li>Potatotes
+</li></ol>
+</dd><dd>Pears
+</dd></dl>
+some more stuff
+"#,
+        &html_string(
+            r"
+\begin{description}
+buggy
+\item[tasty] Apples
+\item[nice] Oranges
+\item[good for you] Vegetables
+\begin{enumerate}
+\item Carrots
+\item Potatotes
+\end{enumerate}
+\item Pears
+\end{description}
+some more stuff
+"
+        )
+    );
+}
+
+#[test]
 fn incomplet_begin() {
     assert_eq!(
         r#"
