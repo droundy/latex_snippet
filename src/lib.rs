@@ -86,6 +86,14 @@ pub extern "C" fn latex_to_html_with_solution(
     ffi_str!(|latex| { html_string(&physics_macros(latex)) })(s)
 }
 
+/// A version of latex_with_solution suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn latex_to_latex_with_solution(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { include_solutions(&physics_macros(latex)) })(s)
+}
+
 /// Convert some LaTeX into an HTML `String`.
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
@@ -100,6 +108,14 @@ pub extern "C" fn latex_to_html_omit_solution(
     s: *const std::os::raw::c_char,
 ) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { html_string(&omit_solutions(&physics_macros(latex))) })(s)
+}
+
+/// A version of html_with_solution suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn latex_to_latex_omit_solution(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { omit_solutions(&physics_macros(latex)) })(s)
 }
 
 /// Convert some LaTeX into an HTML `String`, including figures.

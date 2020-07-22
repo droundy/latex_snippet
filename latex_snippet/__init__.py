@@ -8,3 +8,10 @@ def html_with_solution(s):
 
 def html_omit_solution(s):
     return ffi.string(lib.latex_to_html_omit_solution(s.encode())).decode()
+
+
+def latex_with_solution(s):
+    return ffi.string(lib.latex_to_latex_with_solution(s.encode())).decode()
+
+def latex_omit_solution(s):
+    return ffi.string(lib.latex_to_latex_omit_solution(s.encode())).decode()
