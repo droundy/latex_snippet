@@ -86,14 +86,6 @@ pub extern "C" fn latex_to_html_with_solution(
     ffi_str!(|latex| { html_string(&physics_macros(latex)) })(s)
 }
 
-/// A version of latex_with_solution suitable for export to C and python.
-#[no_mangle]
-pub extern "C" fn latex_to_latex_with_solution(
-    s: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_char {
-    ffi_str!(|latex| { include_solutions(&physics_macros(latex)) })(s)
-}
-
 /// Convert some LaTeX into an HTML `String`.
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
@@ -110,12 +102,35 @@ pub extern "C" fn latex_to_html_omit_solution(
     ffi_str!(|latex| { html_string(&omit_solutions(&physics_macros(latex))) })(s)
 }
 
-/// A version of html_with_solution suitable for export to C and python.
+
+
+/// A version of omit_solution suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn latex_to_latex_omit_solution(
+pub extern "C" fn c_omit_solution(
     s: *const std::os::raw::c_char,
 ) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { omit_solutions(&physics_macros(latex)) })(s)
+}
+/// A version of omit_guide suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn c_omit_guide(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { omit_guide(&physics_macros(latex)) })(s)
+}
+/// A version of omit_handout suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn c_omit_handout(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { omit_handout(&physics_macros(latex)) })(s)
+}
+/// A version of physics_macros suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn c_physics_macros(
+    s: *const std::os::raw::c_char,
+) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { physics_macros(latex) })(s)
 }
 
 /// Convert some LaTeX into an HTML `String`, including figures.
@@ -790,6 +805,24 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 latex = &latex[i + br"\end{solution}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{solution}</span>"#)?;
+                            }
+                        } else if name == "{guide}" {
+                            if let Some(i) = latex.find(r"\end{guide}") {
+                                fmt.write_all(br#"<blockquote class="guide">"#)?;
+                                html_subsubsection(fmt, &latex[..i])?;
+                                fmt.write_all(b"</blockquote>")?;
+                                latex = &latex[i + br"\end{guide}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{guide}</span>"#)?;
+                            }
+                        } else if name == "{handout}" {
+                            if let Some(i) = latex.find(r"\end{handout}") {
+                                fmt.write_all(br#"<blockquote class="handout">"#)?;
+                                html_subsubsection(fmt, &latex[..i])?;
+                                fmt.write_all(b"</blockquote>")?;
+                                latex = &latex[i + br"\end{handout}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{handout}</span>"#)?;
                             }
                         } else if name == "{tabular}" {
                             if let Some(i) = latex.find(r"\end{tabular}") {
@@ -1600,6 +1633,69 @@ pub fn omit_solutions(mut latex: &str) -> String {
     }
     refined
 }
+
+/// Strip out guides
+pub fn omit_guide(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out guides...
+    loop {
+        if let Some(i) = latex.find(r"\begin{guide}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{guide}".len()..];
+            if let Some(i) = latex.find(r"\end{guide}") {
+                latex = &latex[i + r"\end{guide}".len()..];
+            } else {
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
+/// Strip out handouts
+pub fn omit_handout(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out handouts...
+    loop {
+        if let Some(i) = latex.find(r"\begin{handout}") {
+            refined.push_str(&latex[..i]);
+            latex = &latex[i + r"\begin{handout}".len()..];
+            if let Some(i) = latex.find(r"\end{handout}") {
+                latex = &latex[i + r"\end{handout}".len()..];
+            } else {
+                break;
+            }
+        } else {
+            refined.push_str(latex);
+            break;
+        }
+    }
+    refined
+}
+
+/// Keep just the handouts
+pub fn only_handout(mut latex: &str) -> String {
+    let mut refined = String::with_capacity(latex.len());
+    // need to strip out handouts...
+    loop {
+        if let Some(i) = latex.find(r"\begin{handout}") {
+            latex = &latex[i + r"\begin{handout}".len()..];
+            if let Some(i) = latex.find(r"\end{handout}") {
+                refined.push_str(&latex[..i]);
+                latex = &latex[i + r"\end{handout}".len()..];
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+    refined
+}
+
 
 /// Process `\includegraphics` with the specified image directory.
 pub fn with_image_directory(mut latex: &str, img_dir: &str) -> String {

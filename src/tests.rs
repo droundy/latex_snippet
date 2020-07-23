@@ -454,6 +454,7 @@ stuff
         )
     );
 }
+
 #[test]
 fn equation() {
     assert_eq!(
@@ -471,6 +472,18 @@ some more math
 some more math
 "
         )
+    );
+}
+
+#[test]
+fn omit_stuff() {
+    assert_eq!(
+        r"xxx",
+        &omit_handout(r"xx\begin{handout} good stuff \end{handout}x")
+    );
+    assert_eq!(
+        r" good stuff ",
+        &only_handout(r"xx\begin{handout} good stuff \end{handout}x")
     );
 }
 
