@@ -557,6 +557,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         if color == "{" {
                             fmt.write_all(br#"<span class="error">\textcolor{</span>"#)?;
                         } else {
+                            let color = color.replace("{", "").replace("}", "");
                             let arg = argument(latex);
                             latex = &latex[arg.len()..];
                             if arg == "{" {
@@ -573,7 +574,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                     "gray",
                                     "orange",
                                 ]
-                                .contains(&color)
+                                .contains(&color.as_ref())
                                 {
                                     fmt.write_all(br#"<span style="color:"#)?;
                                     fmt.write_all(color.as_bytes())?;
