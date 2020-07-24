@@ -243,7 +243,10 @@ foo
 fn quotes() {
     assert_eq!(r#"foo “bar” baz"#, &html_string(r"foo ``bar'' baz"));
     assert_eq!(r#"\(a''\)"#, &html_string(r"$a''$"));
-    assert_eq!(r#"\begin{align}a''\end{align}"#, &html_string(r"\begin{align}a''\end{align}"));
+    assert_eq!(
+        r#"\begin{align}a''\end{align}"#,
+        &html_string(r"\begin{align}a''\end{align}")
+    );
 }
 
 #[test]
@@ -708,15 +711,9 @@ extra & good
     );
 }
 
-
 #[test]
 fn test_ref() {
-    assert_eq!(
-        r" foo \ref{foo} bar",
-        &html_string(
-            r" foo \ref{foo} bar"
-        )
-    );
+    assert_eq!(r" foo \ref{foo} bar", &html_string(r" foo \ref{foo} bar"));
 }
 
 #[test]
@@ -735,9 +732,12 @@ fn test_itemize_broken() {
 fn paragraph_end_after_environment() {
     assert_eq!(
         "<div class=\"center\">\ncontents\n</div>\n\n",
-        &html_string(r"\begin{center}
+        &html_string(
+            r"\begin{center}
 contents
 \end{center}
 
-"));
+"
+        )
+    );
 }

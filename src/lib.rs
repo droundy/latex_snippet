@@ -102,34 +102,24 @@ pub extern "C" fn latex_to_html_omit_solution(
     ffi_str!(|latex| { html_string(&omit_solutions(&physics_macros(latex))) })(s)
 }
 
-
-
 /// A version of omit_solution suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn c_omit_solution(
-    s: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_char {
+pub extern "C" fn c_omit_solution(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { omit_solutions(&physics_macros(latex)) })(s)
 }
 /// A version of omit_guide suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn c_omit_guide(
-    s: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_char {
+pub extern "C" fn c_omit_guide(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { omit_guide(&physics_macros(latex)) })(s)
 }
 /// A version of omit_handout suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn c_omit_handout(
-    s: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_char {
+pub extern "C" fn c_omit_handout(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { omit_handout(&physics_macros(latex)) })(s)
 }
 /// A version of physics_macros suitable for export to C and python.
 #[no_mangle]
-pub extern "C" fn c_physics_macros(
-    s: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_char {
+pub extern "C" fn c_physics_macros(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { physics_macros(latex) })(s)
 }
 
@@ -559,6 +549,42 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(b"<i>")?;
                             html_subsubsection(fmt, arg)?;
                             fmt.write_all(b"</i>")?;
+                        }
+                    }
+                    r"\textcolor" => {
+                        let color = argument(latex);
+                        latex = &latex[color.len()..];
+                        if color == "{" {
+                            fmt.write_all(br#"<span class="error">\textcolor{</span>"#)?;
+                        } else {
+                            let arg = argument(latex);
+                            latex = &latex[arg.len()..];
+                            if arg == "{" {
+                                fmt.write_all(br#"<span class="error">\textcolor{"#)?;
+                                fmt.write_all(color.as_bytes())?;
+                                fmt.write_all(br#"}{</span>"#)?;
+                            } else {
+                                if [
+                                    "red",
+                                    "blue",
+                                    "forestgreen",
+                                    "purple",
+                                    "brown",
+                                    "gray",
+                                    "orange",
+                                ]
+                                .contains(&color)
+                                {
+                                    fmt.write_all(br#"<span style="color:"#)?;
+                                    fmt.write_all(color.as_bytes())?;
+                                    fmt.write_all(br#";">"#)?;
+                                    html_subsubsection(fmt, arg)?;
+                                    fmt.write_all(b"</span>")?;
+                                } else {
+                                    fmt.write_all(br#"<span class="error">\textcolor{Invalid color, only red and blue allowed}</span>"#)?;
+                                    html_subsubsection(fmt, arg)?;
+                                }
+                            }
                         }
                     }
                     r"\footnote" => {
@@ -1695,7 +1721,6 @@ pub fn only_handout(mut latex: &str) -> String {
     }
     refined
 }
-
 
 /// Process `\includegraphics` with the specified image directory.
 pub fn with_image_directory(mut latex: &str, img_dir: &str) -> String {
