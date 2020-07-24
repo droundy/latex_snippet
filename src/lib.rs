@@ -581,7 +581,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                     html_subsubsection(fmt, arg)?;
                                     fmt.write_all(b"</span>")?;
                                 } else {
-                                    fmt.write_all(br#"<span class="error">\textcolor{Invalid color, allowed: red, blue, forestgreen, purple, gray, brown}</span>"#)?;
+                                    fmt.write_all(br#"<span class="error">\textcolor{Invalid color "#)?;
+                                    fmt.write_all(color.as_bytes())?;
+                                    fmt.write_all(br#" Allowed colors: red, blue, forestgreen, purple, gray, brown}</span>"#)?;
                                     html_subsubsection(fmt, arg)?;
                                 }
                             }
