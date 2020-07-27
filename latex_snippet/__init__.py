@@ -20,5 +20,5 @@ def omit_guide(s):
 def omit_handout(s):
     return ffi.string(lib.c_omit_handout(s.encode())).decode()
 def only_handout(s):
-    return ffi.string(lib.c_only_guide(s.encode())).decode()
+    return ffi.string(lib.c_only_handout(s.encode())).decode()
 
