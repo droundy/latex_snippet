@@ -117,6 +117,11 @@ pub extern "C" fn c_omit_guide(s: *const std::os::raw::c_char) -> *const std::os
 pub extern "C" fn c_omit_handout(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
     ffi_str!(|latex| { omit_handout(&physics_macros(latex)) })(s)
 }
+/// A version of only_handout suitable for export to C and python.
+#[no_mangle]
+pub extern "C" fn c_only_handout(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
+    ffi_str!(|latex| { only_handout(&physics_macros(latex)) })(s)
+}
 /// A version of physics_macros suitable for export to C and python.
 #[no_mangle]
 pub extern "C" fn c_physics_macros(s: *const std::os::raw::c_char) -> *const std::os::raw::c_char {
