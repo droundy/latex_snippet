@@ -834,7 +834,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         } else if name == "{solution}" {
                             if let Some(i) = latex.find(r"\end{solution}") {
                                 fmt.write_all(br#"<blockquote class="solution">"#)?;
-                                html(fmt, &latex[..i])?;
+                                html_subsubsection(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{solution}".len()..];
                             } else {
@@ -843,7 +843,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         } else if name == "{guide}" {
                             if let Some(i) = latex.find(r"\end{guide}") {
                                 fmt.write_all(br#"<blockquote class="guide">"#)?;
-                                html(fmt, &latex[..i])?;
+                                html_subsubsection(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{guide}".len()..];
                             } else {
@@ -852,7 +852,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         } else if name == "{handout}" {
                             if let Some(i) = latex.find(r"\end{handout}") {
                                 fmt.write_all(br#"<blockquote class="handout">"#)?;
-                                html(fmt, &latex[..i])?;
+                                html_subsubsection(fmt, &latex[..i])?;
                                 fmt.write_all(b"</blockquote>")?;
                                 latex = &latex[i + br"\end{handout}".len()..];
                             } else {
