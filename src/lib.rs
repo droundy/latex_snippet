@@ -272,7 +272,7 @@ fn fmt_errors(fmt: &mut impl std::io::Write, latex: &[&str]) -> Result<(), std::
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
-    let latex = strip_comments(latex);
+    let latex = pull_sections_out(&strip_comments(latex));
     let mut latex: &str = &latex;
     if let Some(i) = latex.find(r"\section") {
         html_section(fmt, &latex[..i])?;
@@ -587,7 +587,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                     html_subsubsection(fmt, arg)?;
                                     fmt.write_all(b"</span>")?;
                                 } else {
-                                    fmt.write_all(br#"<span class="error">\textcolor{Invalid color "#)?;
+                                    fmt.write_all(
+                                        br#"<span class="error">\textcolor{Invalid color "#,
+                                    )?;
                                     fmt.write_all(color.as_bytes())?;
                                     fmt.write_all(br#" Allowed colors: red, blue, forestgreen, purple, gray, brown}</span>"#)?;
                                     html_subsubsection(fmt, arg)?;
@@ -831,32 +833,24 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{wrapfigure}</span>"#)?;
                             }
-                        } else if name == "{solution}" {
-                            if let Some(i) = latex.find(r"\end{solution}") {
-                                fmt.write_all(br#"<blockquote class="solution">"#)?;
-                                html_subsubsection(fmt, &latex[..i])?;
-                                fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i + br"\end{solution}".len()..];
+                        } else if ["{solution}", "{guide}", "{handout}"].contains(&name) {
+                            let end = format!(r"\end{}", name);
+                            if let Some(i) = latex.find(&end) {
+                                if latex[..i].chars().all(|c| c.is_whitespace()) {
+                                    // Nothing to do here, this solution is empty
+                                } else {
+                                    let kind = &name[1..name.len() - 1];
+                                    fmt.write_all(br#"<blockquote class=""#)?;
+                                    fmt.write_all(kind.as_bytes())?;
+                                    fmt.write_all(br#"">"#)?;
+                                    html_subsubsection(fmt, &latex[..i])?;
+                                    fmt.write_all(b"</blockquote>")?;
+                                }
+                                latex = &latex[i + br"\end".len() + name.len()..];
                             } else {
-                                fmt.write_all(br#"<span class="error">\begin{solution}</span>"#)?;
-                            }
-                        } else if name == "{guide}" {
-                            if let Some(i) = latex.find(r"\end{guide}") {
-                                fmt.write_all(br#"<blockquote class="guide">"#)?;
-                                html_subsubsection(fmt, &latex[..i])?;
-                                fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i + br"\end{guide}".len()..];
-                            } else {
-                                fmt.write_all(br#"<span class="error">\begin{guide}</span>"#)?;
-                            }
-                        } else if name == "{handout}" {
-                            if let Some(i) = latex.find(r"\end{handout}") {
-                                fmt.write_all(br#"<blockquote class="handout">"#)?;
-                                html_subsubsection(fmt, &latex[..i])?;
-                                fmt.write_all(b"</blockquote>")?;
-                                latex = &latex[i + br"\end{handout}".len()..];
-                            } else {
-                                fmt.write_all(br#"<span class="error">\begin{handout}</span>"#)?;
+                                fmt.write_all(br#"<span class="error">\begin"#)?;
+                                fmt.write_all(name.as_bytes())?;
+                                fmt.write_all(br#"</span>"#)?;
                             }
                         } else if name == "{tabular}" {
                             if let Some(i) = latex.find(r"\end{tabular}") {
@@ -1473,6 +1467,42 @@ pub fn physics_macros(latex: &str) -> String {
     }
     refined.push_str(latex);
 
+    refined
+}
+
+/// Pull (sub)sections out of guide/solution/handout
+pub fn pull_sections_out(latex: &str) -> String {
+    let latex = pull_sections_out_of_environ(latex, "handout");
+    let latex = pull_sections_out_of_environ(&latex, "guide");
+    let latex = pull_sections_out_of_environ(&latex, "solution");
+    latex
+}
+
+/// Pull (sub)sections out of guide/solution/handout
+fn pull_sections_out_of_environ(latex: &str, environ: &str) -> String {
+    let mut latex = latex; // this makes the lifetime local to the function
+    let mut refined = String::with_capacity(latex.len());
+    let begin = format!(r"\begin{{{}}}", environ);
+    let end = format!(r"\end{{{}}}", environ);
+    let section = regex::Regex::new(r"\\[sub]*section\{[^\}]+\}").unwrap();
+    while let Some(i) = latex.find(&begin) {
+        refined.push_str(&latex[..i + begin.len()]);
+        latex = &latex[i + begin.len()..];
+        if let Some(mut i) = latex.find(&end) {
+            while let Some(next_section) = section.find(latex) {
+                if next_section.end() >= i {
+                    break;
+                }
+                refined.push_str(&latex[..next_section.start()]);
+                refined.push_str(&end);
+                refined.push_str(&latex[next_section.start()..next_section.end()]);
+                refined.push_str(&begin);
+                latex = &latex[next_section.end()..];
+                i -= next_section.end();
+            }
+        }
+    }
+    refined.push_str(latex);
     refined
 }
 

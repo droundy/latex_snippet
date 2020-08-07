@@ -160,6 +160,7 @@ baz
 
 #[test]
 fn includesolutions() {
+    println!("starting first test");
     assert_eq!(
         r#"
 hello
@@ -167,7 +168,7 @@ hello
 the solution is here
 \end{quotation}
 foo"#,
-        &include_solutions(
+&include_solutions(
             r"
 hello
 \begin{solution}
@@ -176,6 +177,7 @@ the solution is here
 foo"
         )
     );
+    println!("starting first test");
 
     assert_eq!(
         r#"
@@ -191,6 +193,7 @@ the solution is here
 \end{solution}"
         )
     );
+    println!("starting first test");
 
     assert_eq!(
         r#"
@@ -204,6 +207,7 @@ foo
 \end{solution}"
         )
     );
+    println!("starting penultimate test");
 
     assert_eq!(
         r#"<section><h4>Solution</h4>
@@ -215,6 +219,7 @@ foobar
 "
         )
     );
+    println!("starting true penultimate test");
 
     assert_eq!(
         r#"<blockquote class="solution">
@@ -226,6 +231,7 @@ foo
 \end{solution}"
         )
     );
+    println!("starting first test");
 
     assert_eq!(
         r#"<blockquote class="solution"><p>foo
@@ -235,6 +241,51 @@ foo
 
 foo
 \end{solution}"
+        )
+    );
+}
+
+
+
+#[test]
+fn subsection_in_solution() {
+    assert_eq!(
+        r#"<section><h2>Outer section</h2>
+Before solution
+<section><h3>Hello world</h3><blockquote class="solution">
+In hello world
+</blockquote>
+After solution</section></section>"#,
+        &html_string(
+            r"\section{Outer section}
+Before solution
+\begin{solution}
+\subsection{Hello world}
+In hello world
+\end{solution}
+After solution"
+        )
+    );
+}
+
+#[test]
+fn test_pull_sections_out() {
+    assert_eq!(
+        r"\section{Outer section}
+Before solution
+\begin{solution}
+\end{solution}\subsection{Hello world}\begin{solution}
+In hello world
+\end{solution}
+After solution",
+        &pull_sections_out(
+            r"\section{Outer section}
+Before solution
+\begin{solution}
+\subsection{Hello world}
+In hello world
+\end{solution}
+After solution"
         )
     );
 }
