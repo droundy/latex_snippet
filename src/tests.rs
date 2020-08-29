@@ -1,4 +1,5 @@
 use super::*;
+use expect_test::expect;
 
 #[test]
 fn test_physics_macros() {
@@ -610,22 +611,22 @@ some more stuff
 
 #[test]
 fn definition() {
-    assert_eq!(
-        r#"
-<dl><span class="error">
-buggy
-</span><dt>tasty</dt><dd> Apples
-</dd><dt>nice</dt><dd> Oranges
-</dd><dt>good for you</dt><dd> Vegetables
-<ol><li>Carrots
-</li><li>Potatotes
-</li></ol>
-</dd><dd>Pears
-</dd></dl>
-some more stuff
-"#,
-        &html_string(
-            r"
+    let expected = expect![[r#"
+
+        <dl><span class="error">
+        buggy
+        </span><dt>tasty</dt><dd> Apples
+        </dd><dt>nice</dt><dd> Oranges
+        </dd><dt>good for you</dt><dd> Vegetables
+        <ol><li>Carrots
+        </li><li>Potatotes
+        </li></ol>
+        </dd><dd>Pears
+        </dd></dl>
+        some more stuff
+    "#]];
+    expected.assert_eq(&html_string(
+        r"
 \begin{description}
 buggy
 \item[tasty] Apples
@@ -639,8 +640,20 @@ buggy
 \end{description}
 some more stuff
 "
-        )
-    );
+    ));
+
+    let expected = expect![[r#"
+        <dl><dt>tasty</dt><dd> Apples
+        </dd><dd>Oranges
+        </dd></dl>
+        More valid text."#]];
+    expected.assert_eq(&html_string(
+        r"\begin{description}
+\item[tasty] Apples
+\item Oranges
+\end{description}
+More valid text."
+    ));
 }
 
 #[test]
