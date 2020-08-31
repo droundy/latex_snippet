@@ -1042,7 +1042,6 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                         break;
                                     }
                                 } else {
-                                    // println!("latex starts {}", &li[..5]);
                                     let o = optional_argument(li);
                                     let li = &li[o.len()..];
                                     if o.len() > 2 {
