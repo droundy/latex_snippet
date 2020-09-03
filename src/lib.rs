@@ -653,7 +653,11 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 fmt.write_all(url.as_bytes())?;
                                 fmt.write_all(br#"}{</span>"#)?;
                             } else {
-                                fmt.write_all(b"<a href=\"")?;
+                                if url.starts_with("https://") {
+                                    fmt.write_all(b"<a target=\"_parent\" href=\"")?;
+                                } else {
+                                    fmt.write_all(b"<a href=\"")?;
+                                }
                                 fmt.write_all(url.as_bytes())?;
                                 fmt.write_all(b"\">")?;
                                 html_subsubsection(fmt, arg)?;
