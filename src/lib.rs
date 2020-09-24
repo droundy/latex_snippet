@@ -750,7 +750,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         fmt.write_all(b"#")?;
                     }
                     r"\$" => {
-                        fmt.write_all(b"$")?;
+                        fmt.write_all(br"<span>$</span>")?;
                     }
                     r"\&" => {
                         fmt.write_all(b"&amp;")?;

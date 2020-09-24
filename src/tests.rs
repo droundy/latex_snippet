@@ -169,7 +169,7 @@ hello
 the solution is here
 \end{quotation}
 foo"#,
-&include_solutions(
+        &include_solutions(
             r"
 hello
 \begin{solution}
@@ -245,8 +245,6 @@ foo
         )
     );
 }
-
-
 
 #[test]
 fn subsection_in_solution() {
@@ -438,7 +436,7 @@ fn escape_ampersand() {
 }
 #[test]
 fn escape_dollar() {
-    assert_eq!(r"hello<i>$world</i>", &html_string(r"hello\it\$world"));
+    expect![[r#"hello<i><span>$</span>world</i>"#]].assert_eq(&html_string(r"hello\it\$world"));
 }
 #[test]
 fn escape_percent() {
@@ -639,7 +637,7 @@ buggy
 \item Pears
 \end{description}
 some more stuff
-"
+",
     ));
 
     let expected = expect![[r#"
@@ -652,7 +650,7 @@ some more stuff
 \item[tasty] Apples
 \item Oranges
 \end{description}
-More valid text."
+More valid text.",
     ));
 }
 
