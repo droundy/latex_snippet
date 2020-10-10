@@ -481,6 +481,18 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     r"\\" => {
                         fmt.write_all(b"<br/>")?;
                     }
+                    r"\newpage" => {
+                        fmt.write_all(b"<br/>")?;
+                    }
+                    r"\vspace" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\vspace{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<br/>")?; // just treat a \vspace as a line break
+                        }
+                    }
                     r"\textbackslash" => {
                         fmt.write_all(b"\\")?;
                     }
@@ -490,7 +502,6 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         if arg == "{" {
                             fmt.write_all(br#"<span class="error">\label{</span>"#)?;
                         } else {
-                            fmt.write_all(br#"<span class="error">\label{</span>"#)?;
                             write!(fmt, r#"<span class="error">\label{}</span>"#, arg)?;
                         }
                     }
