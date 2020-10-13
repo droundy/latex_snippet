@@ -435,6 +435,10 @@ fn escape_ampersand() {
     );
 }
 #[test]
+fn nbsp() {
+    expect![[r#"Temperature is 300&nbsp;K"#]].assert_eq(&html_string(r"Temperature is 300~K"));
+}
+#[test]
 fn escape_dollar() {
     expect![[r#"hello<i><span>$</span>world</i>"#]].assert_eq(&html_string(r"hello\it\$world"));
 }

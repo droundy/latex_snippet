@@ -470,11 +470,14 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
         if latex.len() == 0 {
             return Ok(());
         }
-        if let Some(i) = latex.find(|c| c == '\\' || c == '{' || c == '$') {
+        if let Some(i) = latex.find(|c| c == '~' || c == '\\' || c == '{' || c == '$') {
             fmt_as_html(fmt, &latex[..i])?;
             latex = &latex[i..];
             let c = latex.chars().next().unwrap();
-            if c == '\\' {
+            if c == '~' {
+                latex = &latex[1..];
+                fmt.write_all(b"&nbsp;")?;
+            } else if c == '\\' {
                 let name = macro_name(latex);
                 latex = &latex[name.len()..];
                 match name {
