@@ -484,7 +484,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                     r"\newpage" => {
                         fmt.write_all(b"<br/>")?;
                     }
-                    r"\vspace" => {
+                    r"\vspace" | r"\vfill" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
                         if arg == "{" {
