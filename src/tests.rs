@@ -3,21 +3,19 @@ use expect_test::expect;
 
 #[test]
 fn test_physics_macros() {
-    assert_eq!(
-        r"
-\left\langle {foo}\right|
-bar
-\left|{baz}\right\rangle 
+    expect![[r#"
 
-{d\hspace{-0.28em}\bar{}} X
-
-\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
-
-\left(\frac{\partial {T}}{\partial {p}}\right)_{V}
-
-",
-        &physics_macros(
-            r"
+            \left\langle {foo}\right|
+            bar
+            \left|{baz}\right\rangle 
+    
+            {d\hspace*{-0.08em}\bar{}\hspace*{0.1em}} X
+    
+            \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
+    
+            \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
+    
+    "#]].assert_eq(&physics_macros(r"
 \bra{foo}
 bar
 \ket{baz}
@@ -28,9 +26,7 @@ bar
 
 \myderiv{T}{p}{V}
 
-"
-        )
-    );
+"));
 
     assert_eq!(
         r"  \left\langle {1}\middle|{0}\right\rangle   ",
