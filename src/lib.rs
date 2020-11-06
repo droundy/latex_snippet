@@ -23,6 +23,8 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
     }
 }
 
+static LATEX_DBAR: &'static str = r"{\mkern3mu\mathchar'26\mkern-12mu d}";
+
 /// Cut out comments
 ///
 /// This is only useful with html_section and friends, since html and
@@ -157,6 +159,8 @@ fn needs_quoting_at_start(x: &str) -> Option<usize> {
     let badstuff = "<>&\"'/";
     if x.starts_with("``") || x.starts_with("''") {
         Some(2)
+    } else if x.starts_with(LATEX_DBAR) {
+        Some(LATEX_DBAR.len())
     } else if badstuff.contains(x.chars().next().unwrap()) {
         Some(1)
     } else {
@@ -204,7 +208,13 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
                 "/" => "&#x2f;",
                 "``" => "“",
                 "''" => "”",
-                _ => panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote),
+                _ => {
+                    if needs_quote == LATEX_DBAR {
+                        r"{\mathit{\unicode{273}}}"
+                    } else {
+                        panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote)
+                    }
+                }
             }
             .as_bytes(),
         )?;
@@ -236,7 +246,13 @@ fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
                 "/" => "&#x2f;",
                 "``" => "``",
                 "''" => "''",
-                _ => panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote),
+                _ => {
+                    if needs_quote == LATEX_DBAR {
+                        r"{\mathit{\unicode{273}}}"
+                    } else {
+                        panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote)
+                    }
+                }
             }
             .as_bytes(),
         )?;
@@ -1444,7 +1460,7 @@ pub fn physics_macros(latex: &str) -> String {
     while let Some(i) = latex.find(r"\dbar ") {
         refined.push_str(&latex[..i]);
         latex = &latex[i + r"\dbar".len()..];
-        refined.push_str(r"{d\hspace{-0.28em}\bar{}\hspace{.2em}}");
+        refined.push_str(LATEX_DBAR);
     }
     refined.push_str(latex);
     latex = &refined;

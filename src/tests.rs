@@ -3,13 +3,15 @@ use expect_test::expect;
 
 #[test]
 fn test_physics_macros() {
+    expect![[r#"\({\mathit{\unicode{273}}} X\)"#]].assert_eq(&html_string(&physics_macros(r"$\dbar X$")));
+
     expect![[r#"
 
         \left\langle {foo}\right|
         bar
         \left|{baz}\right\rangle 
 
-        {d\hspace{-0.28em}\bar{}\hspace{.2em}} X
+        {\mkern3mu\mathchar'26\mkern-12mu d} X
 
         \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
