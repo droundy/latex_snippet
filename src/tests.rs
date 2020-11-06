@@ -9,7 +9,7 @@ fn test_physics_macros() {
         bar
         \left|{baz}\right\rangle 
 
-        {d\hspace{-0.08em}\bar{}\hspace{0.1em}} X
+        {d\hspace{-0.28em}\bar{}\hspace{.2em}} X
 
         \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 

@@ -1444,7 +1444,7 @@ pub fn physics_macros(latex: &str) -> String {
     while let Some(i) = latex.find(r"\dbar ") {
         refined.push_str(&latex[..i]);
         latex = &latex[i + r"\dbar".len()..];
-        refined.push_str(r"{d\hspace{-0.08em}\bar{}\hspace{0.1em}}");
+        refined.push_str(r"{d\hspace{-0.28em}\bar{}\hspace{.2em}}");
     }
     refined.push_str(latex);
     latex = &refined;
