@@ -5,16 +5,16 @@ use expect_test::expect;
 fn test_physics_macros() {
     expect![[r#"
 
-            \left\langle {foo}\right|
-            bar
-            \left|{baz}\right\rangle 
-    
-            {d\hspace*{-0.08em}\bar{}\hspace*{0.1em}} X
-    
-            \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
-    
-            \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
-    
+        \left\langle {foo}\right|
+        bar
+        \left|{baz}\right\rangle 
+
+        {d\hspace{-0.08em}\bar{}\hspace{0.1em}} X
+
+        \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
+
+        \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
+
     "#]].assert_eq(&physics_macros(r"
 \bra{foo}
 bar
