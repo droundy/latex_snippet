@@ -922,6 +922,15 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{center}</span>"#)?;
                             }
+                        } else if name == "{verbatim}" {
+                            if let Some(i) = latex.find(r"\end{verbatim}") {
+                                fmt.write_all(b"<code>")?;
+                                fmt_as_html(fmt, &latex[..i])?;
+                                fmt.write_all(b"</code>")?;
+                                latex = &latex[i + br"\end{verbatim}".len()..];
+                            } else {
+                                fmt.write_all(br#"<span class="error">\begin{verbatim}</span>"#)?;
+                            }
                         } else if name == "{quote}" {
                             if let Some(i) = latex.find(r"\end{quote}") {
                                 fmt.write_all(b"<blockquote>")?;

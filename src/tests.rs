@@ -610,6 +610,55 @@ some more stuff
 }
 
 #[test]
+fn verbatim() {
+    let expected = expect![[r##"
+
+        <code>
+        pub fn strip_comments(latex: &amp;str) -&gt; String {
+            let temp = latex.replace(r&quot;\%&quot;, r&quot;\%&quot;);
+            let mut out = String::with_capacity(temp.len() + 1);
+            for x in temp.split(&#x27;\n&#x27;) {
+                if x.chars().next() == Some(&#x27;             continue; &#x2f;&#x2f; skip this line entirely
+                }
+                if let Some(i) = x.find(&#x27;             out.push_str(&amp;x[..i]);
+                    out.push(&#x27; &#x27;); &#x2f;&#x2f; comment &quot;blocks&quot; line ending.
+                } else {
+                    out.push_str(x);
+                    out.push(&#x27;\n&#x27;)
+                }
+            }
+            out.pop();
+            out.replace(r&quot;\%&quot;, r&quot;\%&quot;)
+        }
+        </code>
+    "##]];
+    expected.assert_eq(&html_string(
+        r#"
+\begin{verbatim}
+pub fn strip_comments(latex: &str) -> String {
+    let temp = latex.replace(r"\%", r"\percent_holder");
+    let mut out = String::with_capacity(temp.len() + 1);
+    for x in temp.split('\n') {
+        if x.chars().next() == Some('%') {
+            continue; // skip this line entirely
+        }
+        if let Some(i) = x.find('%') {
+            out.push_str(&x[..i]);
+            out.push(' '); // comment "blocks" line ending.
+        } else {
+            out.push_str(x);
+            out.push('\n')
+        }
+    }
+    out.pop();
+    out.replace(r"\percent_holder", r"\%")
+}
+\end{verbatim}
+"#,
+    ));
+}
+
+#[test]
 fn definition() {
     let expected = expect![[r#"
 
