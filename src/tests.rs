@@ -613,7 +613,7 @@ some more stuff
 fn verbatim() {
     let expected = expect![[r##"
 
-        <code>
+        <pre>
         pub fn strip_comments(latex: &amp;str) -&gt; String {
             let temp = latex.replace(r&quot;\%&quot;, r&quot;\%&quot;);
             let mut out = String::with_capacity(temp.len() + 1);
@@ -630,7 +630,7 @@ fn verbatim() {
             out.pop();
             out.replace(r&quot;\%&quot;, r&quot;\%&quot;)
         }
-        </code>
+        </pre>
     "##]];
     expected.assert_eq(&html_string(
         r#"

@@ -924,9 +924,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             }
                         } else if name == "{verbatim}" {
                             if let Some(i) = latex.find(r"\end{verbatim}") {
-                                fmt.write_all(b"<code>")?;
+                                fmt.write_all(b"<pre>")?;
                                 fmt_as_html(fmt, &latex[..i])?;
-                                fmt.write_all(b"</code>")?;
+                                fmt.write_all(b"</pre>")?;
                                 latex = &latex[i + br"\end{verbatim}".len()..];
                             } else {
                                 fmt.write_all(br#"<span class="error">\begin{verbatim}</span>"#)?;
