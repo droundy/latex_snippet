@@ -656,6 +656,12 @@ pub fn strip_comments(latex: &str) -> String {
 \end{verbatim}
 "#,
     ));
+
+
+    let expected = expect![[r##"  <code>This &lt; is cool.</code> it really is"##]];
+    expected.assert_eq(&html_string(
+        r#"  \verb!This < is cool.! it really is"#,
+    ));
 }
 
 #[test]

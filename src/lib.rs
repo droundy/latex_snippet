@@ -553,6 +553,19 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(arg.as_bytes())?;
                         }
                     }
+                    r"\verb" => {
+                        let sep = &latex[0..1];
+                        latex = &latex[1..];
+                        if let Some(end) = latex.find(&sep) {
+                            let content = &latex[..end];
+                            latex = &latex[end+1..];
+                            fmt.write_all(b"<code>")?;
+                            fmt_as_html(fmt, content)?;
+                            fmt.write_all(b"</code>")?;
+                        } else {
+                            write!(fmt, r#"<span class="error">\verb{}</span>"#, sep)?;
+                        }
+                    }
                     r"\emph" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
