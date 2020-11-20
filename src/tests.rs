@@ -665,6 +665,65 @@ pub fn strip_comments(latex: &str) -> String {
 }
 
 #[test]
+fn paragraphs_after_math() {
+    let expected = expect![[r#"
+        <p>
+        Paragraph before the math.
+
+        </p><p>Start a paragraph.
+        \begin{align}
+          y &amp;= x^2
+        \end{align}
+        Still in the same paragraph.
+
+        </p><p>This is a new paragraph.
+        </p>"#]];
+    expected.assert_eq(&html_string(
+        r#"
+Paragraph before the math.
+
+Start a paragraph.
+\begin{align}
+  y &= x^2
+\end{align}
+Still in the same paragraph.
+
+This is a new paragraph.
+"#,
+    ));
+
+    let expected = expect![[r#"
+
+        <blockquote class="solution"><p>
+        Paragraph before the math.
+
+        </p><p>Start a paragraph.
+        \begin{align}
+          y &amp;= x^2
+        \end{align}
+        Still in the same paragraph.
+
+        </p><p>This is a new paragraph.
+        </p></blockquote>
+    "#]];
+    expected.assert_eq(&html_string(
+        r#"
+\begin{solution}
+Paragraph before the math.
+
+Start a paragraph.
+\begin{align}
+  y &= x^2
+\end{align}
+Still in the same paragraph.
+
+This is a new paragraph.
+\end{solution}
+"#,
+    ));
+}
+
+#[test]
 fn definition() {
     let expected = expect![[r#"
 
