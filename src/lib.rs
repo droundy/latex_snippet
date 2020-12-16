@@ -25,12 +25,20 @@ pub extern "C" fn convert_html(s: *const std::os::raw::c_char) -> *const std::os
 
 static LATEX_DBAR: &'static str = r"{\mkern3mu\mathchar'26\mkern-12mu d}";
 
+fn replace_in_place(latex: &mut String, old: &str, new: &str) {
+    if latex.contains(old) {
+        *latex = latex.replace(old, new);
+    }
+}
+
 /// Cut out comments
 ///
 /// This is only useful with html_section and friends, since html and
 /// html_string do this automatically.
 pub fn strip_comments(latex: &str) -> String {
-    let temp = latex.replace(r"\%", r"\percent_holder");
+    let mut temp = latex.replace(r"\%", r"\percent_holder");
+    replace_in_place(&mut temp, r"\`e", "è");
+    replace_in_place(&mut temp, r"\'e", "é");
     let mut out = String::with_capacity(temp.len() + 1);
     for x in temp.split('\n') {
         if x.chars().next() == Some('%') {

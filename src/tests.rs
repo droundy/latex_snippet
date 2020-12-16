@@ -421,6 +421,11 @@ fn escape_space() {
 fn escape_pound() {
     assert_eq!(r"hello<i>#world</i>", &html_string(r"hello\it\#world"));
 }
+
+#[test]
+fn escape_accent() {
+    expect![[r#"André-Marie Ampère"#]].assert_eq(&html_string(r"Andr\'e-Marie Amp\`ere"));
+}
 #[test]
 fn escape_underscore() {
     assert_eq!(r"hello<i>_world</i>", &html_string(r"hello\it\_world"));
