@@ -426,6 +426,7 @@ fn escape_pound() {
 fn escape_accent() {
     expect![[r#"Andr&eacute;-Marie Amp&egrave;re"#]].assert_eq(&html_string(r"Andr\'e-Marie Amp\`ere"));
     expect![[r#"Schr&ouml;dinger"#]].assert_eq(&html_string(r#"Schr\"odinger"#));
+    expect![[r"&#8491; is the symbol for Angstrom"]].assert_eq(&html_string(r#"\AA\ is the symbol for Angstrom"#));
 }
 #[test]
 fn escape_underscore() {

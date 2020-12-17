@@ -533,6 +533,9 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         latex = &latex[1..];
                         write!(fmt, "&{}uml;", letter)?;
                     }
+                    r#"\AA"# => {
+                        fmt.write_all(b"&#8491;")?;
+                    }
                     r"\label" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
