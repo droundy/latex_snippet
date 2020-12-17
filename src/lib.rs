@@ -528,6 +528,11 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         latex = &latex[1..];
                         write!(fmt, "&{}grave;", letter)?;
                     }
+                    r#"\""# => {
+                        let letter = &latex[..1];
+                        latex = &latex[1..];
+                        write!(fmt, "&{}uml;", letter)?;
+                    }
                     r"\label" => {
                         let arg = argument(latex);
                         latex = &latex[arg.len()..];
