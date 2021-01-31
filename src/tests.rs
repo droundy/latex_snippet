@@ -414,6 +414,10 @@ fn inline_math() {
     );
 }
 #[test]
+fn ldots() {
+    assert_eq!(r"hello...", &html_string(r"hello\ldots"));
+}
+#[test]
 fn escape_space() {
     assert_eq!(r"hello<i> world</i>", &html_string(r"hello\it\ world"));
 }
