@@ -153,16 +153,19 @@ pub fn html_with_figures_omit_solution(latex: &str, figure_directory: &str) -> S
 }
 
 fn needs_quoting_at_start(x: &str) -> Option<usize> {
-    if x.len() == 0 {
-        return None;
-    }
-    let badstuff = "<>&\"'/";
-    if x.starts_with("``") || x.starts_with("''") {
-        Some(2)
-    } else if x.starts_with(LATEX_DBAR) {
-        Some(LATEX_DBAR.len())
-    } else if badstuff.contains(x.chars().next().unwrap()) {
-        Some(1)
+    if let Some(c) = x.chars().next() {
+        let badstuff = "<>&\"'/";
+        if x.starts_with("``") || x.starts_with("''") {
+            Some(2)
+        } else if x.starts_with(LATEX_DBAR) {
+            Some(LATEX_DBAR.len())
+        } else if badstuff.contains(c) {
+            Some(1)
+        } else if !c.is_ascii() {
+            x.find(|c: char| c.is_ascii()).or_else(|| Some(x.len()))
+        } else {
+            None
+        }
     } else {
         None
     }
@@ -182,6 +185,8 @@ fn find_next_quoting(x: &str) -> Option<(usize, usize)> {
 #[test]
 fn test_find_next_quoting() {
     assert_eq!(find_next_quoting("  ''  "), Some((2, 4)));
+    assert_eq!(find_next_quoting("  ”  "), Some((2, 5)));
+    assert_eq!(find_next_quoting("  “  "), Some((2, 5)));
 }
 
 /// This just does simple textual formatting
@@ -197,28 +202,30 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
         fmt.write_all(latex[..start].as_bytes())?;
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
-        fmt.write_all(
-            match needs_quote {
-                // needs_quote is constrained by needs_quoting_at_start above.
-                "<" => "&lt;",
-                ">" => "&gt;",
-                "&" => "&amp;",
-                "\"" => "&quot;",
-                "'" => "&#x27;",
-                "/" => "&#x2f;",
-                "``" => "“",
-                "''" => "”",
-                _ => {
-                    if needs_quote == LATEX_DBAR {
-                        r"{\mathit{\unicode{273}}}"
-                    } else {
-                        panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote)
-                    }
+        eprintln!("needs quote is {} from {}-{}", needs_quote, start, end);
+        match needs_quote {
+            // needs_quote is constrained by needs_quoting_at_start above.
+            "<" => fmt.write_all("&lt;".as_bytes())?,
+            ">" => fmt.write_all("&gt;".as_bytes())?,
+            "&" => fmt.write_all("&amp;".as_bytes())?,
+            "\"" => fmt.write_all("&quot;".as_bytes())?,
+            "'" => fmt.write_all("&#x27;".as_bytes())?,
+            "/" => fmt.write_all("&#x2f;".as_bytes())?,
+            "``" => fmt.write_all("“".as_bytes())?,
+            "''" => fmt.write_all("”".as_bytes())?,
+            _ => {
+                if needs_quote == LATEX_DBAR {
+                    fmt.write_all(r"{\mathit{\unicode{273}}}".as_bytes())?
+                } else {
+                    fmt.write_all(br#"<span class="error">"#)?;
+                    fmt.write_all(needs_quote.as_bytes())?;
+                    fmt.write_all(br#"</span>"#)?;
                 }
             }
-            .as_bytes(),
-        )?;
+        }
+        println!("   latex is now {}", latex);
     }
+    println!("I got past this now {}", latex);
     fmt.write_all(latex.as_bytes())
 }
 
@@ -235,27 +242,26 @@ fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
         fmt.write_all(latex[..start].as_bytes())?;
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
-        fmt.write_all(
-            match needs_quote {
-                // needs_quote is constrained by needs_quoting_at_start above.
-                "<" => "&lt;",
-                ">" => "&gt;",
-                "&" => "&amp;",
-                "\"" => "&quot;",
-                "'" => "&#x27;",
-                "/" => "&#x2f;",
-                "``" => "``",
-                "''" => "''",
-                _ => {
-                    if needs_quote == LATEX_DBAR {
-                        r"{\mathit{\unicode{273}}}"
-                    } else {
-                        panic!("invalid needs_quote in fmt_math_as_html: '{}'", needs_quote)
-                    }
+        match needs_quote {
+            // needs_quote is constrained by needs_quoting_at_start above.
+            "<" => fmt.write_all("&lt;".as_bytes())?,
+            ">" => fmt.write_all("&gt;".as_bytes())?,
+            "&" => fmt.write_all("&amp;".as_bytes())?,
+            "\"" => fmt.write_all("&quot;".as_bytes())?,
+            "'" => fmt.write_all("&#x27;".as_bytes())?,
+            "/" => fmt.write_all("&#x2f;".as_bytes())?,
+            "``" => fmt.write_all("``".as_bytes())?,
+            "''" => fmt.write_all("''".as_bytes())?,
+            _ => {
+                if needs_quote == LATEX_DBAR {
+                    fmt.write_all(r"{\mathit{\unicode{273}}}".as_bytes())?
+                } else {
+                    fmt.write_all(br#"<span class="error">"#)?;
+                    fmt.write_all(needs_quote.as_bytes())?;
+                    fmt.write_all(br#"</span>"#)?;
                 }
             }
-            .as_bytes(),
-        )?;
+        }
     }
     fmt.write_all(latex.as_bytes())
 }
@@ -582,7 +588,7 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         latex = &latex[1..];
                         if let Some(end) = latex.find(&sep) {
                             let content = &latex[..end];
-                            latex = &latex[end+1..];
+                            latex = &latex[end + 1..];
                             fmt.write_all(b"<code>")?;
                             fmt_as_html(fmt, content)?;
                             fmt.write_all(b"</code>")?;

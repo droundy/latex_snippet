@@ -427,6 +427,12 @@ fn escape_pound() {
 }
 
 #[test]
+fn object_to_unicode() {
+    expect![[r#"Andr<span class="error">é</span>-Marie Amp<span class="error">è</span>re"#]].assert_eq(&html_string(r"André-Marie Ampère"));
+    expect![[r#"Schr<span class="error">ö</span>dinger"#]].assert_eq(&html_string(r#"Schrödinger"#));
+    expect![[r#"Unicode <span class="error">“</span>quotes<span class="error">”</span>"#]].assert_eq(&html_string(r#"Unicode “quotes”"#));
+}
+#[test]
 fn escape_accent() {
     expect![[r#"Andr&eacute;-Marie Amp&egrave;re"#]].assert_eq(&html_string(r"Andr\'e-Marie Amp\`ere"));
     expect![[r#"Schr&ouml;dinger"#]].assert_eq(&html_string(r#"Schr\"odinger"#));
