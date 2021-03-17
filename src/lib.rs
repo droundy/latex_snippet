@@ -250,7 +250,7 @@ fn fmt_math_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<()
                     if needs_quote == LATEX_DBAR {
                         r"{\mathit{\unicode{273}}}"
                     } else {
-                        panic!("invalid needs_quote in fmt_as_html: '{}'", needs_quote)
+                        panic!("invalid needs_quote in fmt_math_as_html: '{}'", needs_quote)
                     }
                 }
             }
