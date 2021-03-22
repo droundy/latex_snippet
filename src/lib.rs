@@ -692,6 +692,17 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(b"</b>")?;
                         }
                     }
+                    r"\texttt" => {
+                        let arg = argument(latex);
+                        latex = &latex[arg.len()..];
+                        if arg == "{" {
+                            fmt.write_all(br#"<span class="error">\texttt{</span>"#)?;
+                        } else {
+                            fmt.write_all(b"<code>")?;
+                            html_subsubsection(fmt, arg)?;
+                            fmt.write_all(b"</code>")?;
+                        }
+                    }
                     r"\url" => {
                         let arg = argument(latex); // strip of {} create function to validate url
                         let url = process_url_argument(arg);
