@@ -959,7 +959,13 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                                 latex = &latex[arg.len()..i];
                                 // We just ignore the alignment marks.
                                 fmt.write_all(br#"<table>"#)?;
-                                for row in latex.split(r"\\") {
+                                let table_contents = latex.replace(r"\hline", r"\\ \hline");
+                                for mut row in table_contents.split(r"\\") {
+                                    if row.starts_with(r" \hline") {
+                                        fmt.write_all(br#"<tr style="border-bottom:1px solid black"><td colspan="100%"></td></tr>
+"#)?;
+                                        row = &row[7..];
+                                    }
                                     let row = row.replace(r"\&", "myampersand");
                                     fmt.write_all(br#"<tr>"#)?;
                                     for column in row.split("&") {

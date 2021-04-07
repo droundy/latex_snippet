@@ -909,6 +909,23 @@ extra & good
 "
         )
     );
+
+
+    expect![[r#"
+
+        <table><tr><td>
+        foo </td><td> bar </td><td> baz </td></tr><tr><td>
+        </td></tr><tr style="border-bottom:1px solid black"><td colspan="100%"></td></tr>
+        <tr><td>
+        extra </td><td> good
+        </td></tr></table>
+    "#]].assert_eq(&html_string(r"
+\begin{tabular}{ccc}
+foo & bar & baz \\
+\hline
+extra & good
+\end{tabular}
+"));
 }
 
 #[test]
