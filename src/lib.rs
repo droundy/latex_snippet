@@ -529,6 +529,14 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                         latex = &latex[1..];
                         write!(fmt, "&{}acute;", letter)?;
                     }
+                    r"\^" => {
+                        if latex.len() == 0 {
+                            fmt.write_all(br#"<span class="error">\^</span>"#)?;
+                        }
+                        let letter = &latex[..1];
+                        latex = &latex[1..];
+                        write!(fmt, "&{}circ;", letter)?;
+                    }
                     r"\`" => {
                         let letter = &latex[..1];
                         latex = &latex[1..];
