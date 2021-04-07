@@ -347,6 +347,10 @@ fn wrapfigure() {
         r#"hello<figure class="wrapfigure" style="width:10em">foo</figure>"#,
         &html_string(r"hello\begin{wrapfigure}{r}{10em}foo\end{wrapfigure}")
     );
+    assert_eq!(
+        r#"hello<figure class="wrapfigure" style="width:50%">foo</figure>"#,
+        &html_string(r"hello\begin{wrapfigure}{r}{0.5\columnwidth}foo\end{wrapfigure}")
+    );
 }
 
 #[test]

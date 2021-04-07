@@ -1433,8 +1433,8 @@ fn optional_argument(latex: &str) -> &str {
 
 /// Returns the class to be used
 fn parse_width(option: &str) -> String {
-    let em = regex::Regex::new(r"[\[\{]width=(\d+)(.+)[\}\]]").unwrap();
-    let other = regex::Regex::new(r"[\[\{](\d+)(.+)[\}\]]").unwrap();
+    let em = regex::Regex::new(r"[\[\{]width=([0-9\.]+)(.+)[\}\]]").unwrap();
+    let other = regex::Regex::new(r"[\[\{]([0-9\.]+)(.+)[\}\]]").unwrap();
     if let Some(c) = em.captures(option).or(other.captures(option)) {
         let value = c.get(1).unwrap().as_str();
         let units = c.get(2).unwrap().as_str();
@@ -1442,10 +1442,20 @@ fn parse_width(option: &str) -> String {
             "em" | "ex" | "cm" | "in" | "mm" | "pt" => {
                 return format!(r#" style="width:{}{}""#, value, units);
             }
+            r"\columnwidth" => {
+                return format!(r#" style="width:{}%""#, 100.0*value.parse::<f64>().unwrap_or(1.0));
+            }
             _ => (),
         }
+    } else {
+        println!("did not find string");
     }
     return "".to_string();
+}
+
+#[test]
+fn parse_width_test() {
+    assert_eq!(" style=\"width:50%\"", &parse_width(r"[width=0.5\columnwidth]"));
 }
 
 fn parse_title(latex: &str) -> &str {
