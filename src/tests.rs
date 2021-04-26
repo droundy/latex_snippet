@@ -431,6 +431,12 @@ fn escape_pound() {
 }
 
 #[test]
+fn href() {
+    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]].assert_eq(&html_string(r"  \href{url with spaces}{test}"));
+    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]].assert_eq(&html_string(r"  \href{url\%20with\%20spaces}{test}"));
+}
+
+#[test]
 fn object_to_unicode() {
     expect![[r#"Andr<span class="error">é</span>-Marie Amp<span class="error">è</span>re"#]].assert_eq(&html_string(r"André-Marie Ampère"));
     expect![[r#"Schr<span class="error">ö</span>dinger"#]].assert_eq(&html_string(r#"Schrödinger"#));

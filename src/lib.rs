@@ -392,6 +392,8 @@ fn process_url_argument(url: &str) -> String {
     let mut url = url.to_string();
     url = url.replace('{', "");
     url = url.replace('}', "");
+    url = url.replace(r"\%", "%");
+    url = url.replace(r" ", "%20");
     url
 }
 
