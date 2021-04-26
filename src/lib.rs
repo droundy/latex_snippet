@@ -1459,7 +1459,10 @@ fn parse_width(option: &str) -> String {
                 return format!(r#" style="width:{}{}""#, value, units);
             }
             r"\columnwidth" => {
-                return format!(r#" style="width:{}%""#, 100.0*value.parse::<f64>().unwrap_or(1.0));
+                return format!(
+                    r#" style="width:{}%""#,
+                    100.0 * value.parse::<f64>().unwrap_or(1.0)
+                );
             }
             _ => (),
         }
@@ -1471,7 +1474,10 @@ fn parse_width(option: &str) -> String {
 
 #[test]
 fn parse_width_test() {
-    assert_eq!(" style=\"width:50%\"", &parse_width(r"[width=0.5\columnwidth]"));
+    assert_eq!(
+        " style=\"width:50%\"",
+        &parse_width(r"[width=0.5\columnwidth]")
+    );
 }
 
 fn parse_title(latex: &str) -> &str {

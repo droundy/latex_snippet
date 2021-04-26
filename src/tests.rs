@@ -3,7 +3,8 @@ use expect_test::expect;
 
 #[test]
 fn test_physics_macros() {
-    expect![[r#"\({\mathit{\unicode{273}}} X\)"#]].assert_eq(&html_string(&physics_macros(r"$\dbar X$")));
+    expect![[r#"\({\mathit{\unicode{273}}} X\)"#]]
+        .assert_eq(&html_string(&physics_macros(r"$\dbar X$")));
 
     expect![[r#"
 
@@ -17,7 +18,9 @@ fn test_physics_macros() {
 
         \left(\frac{\partial {T}}{\partial {p}}\right)_{V}
 
-    "#]].assert_eq(&physics_macros(r"
+    "#]]
+    .assert_eq(&physics_macros(
+        r"
 \bra{foo}
 bar
 \ket{baz}
@@ -28,7 +31,8 @@ bar
 
 \myderiv{T}{p}{V}
 
-"));
+",
+    ));
 
     assert_eq!(
         r"  \left\langle {1}\middle|{0}\right\rangle   ",
@@ -432,22 +436,30 @@ fn escape_pound() {
 
 #[test]
 fn href() {
-    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]].assert_eq(&html_string(r"  \href{url with spaces}{test}"));
-    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]].assert_eq(&html_string(r"  \href{url\%20with\%20spaces}{test}"));
+    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]]
+        .assert_eq(&html_string(r"  \href{url with spaces}{test}"));
+    expect![[r#"  <a href="url%20with%20spaces">test</a>"#]]
+        .assert_eq(&html_string(r"  \href{url\%20with\%20spaces}{test}"));
 }
 
 #[test]
 fn object_to_unicode() {
-    expect![[r#"Andr<span class="error">é</span>-Marie Amp<span class="error">è</span>re"#]].assert_eq(&html_string(r"André-Marie Ampère"));
-    expect![[r#"Schr<span class="error">ö</span>dinger"#]].assert_eq(&html_string(r#"Schrödinger"#));
-    expect![[r#"Unicode <span class="error">“</span>quotes<span class="error">”</span>"#]].assert_eq(&html_string(r#"Unicode “quotes”"#));
+    expect![[r#"Andr<span class="error">é</span>-Marie Amp<span class="error">è</span>re"#]]
+        .assert_eq(&html_string(r"André-Marie Ampère"));
+    expect![[r#"Schr<span class="error">ö</span>dinger"#]]
+        .assert_eq(&html_string(r#"Schrödinger"#));
+    expect![[r#"Unicode <span class="error">“</span>quotes<span class="error">”</span>"#]]
+        .assert_eq(&html_string(r#"Unicode “quotes”"#));
 }
 #[test]
 fn escape_accent() {
-    expect![[r#"Andr&eacute;-Marie Amp&egrave;re"#]].assert_eq(&html_string(r"Andr\'e-Marie Amp\`ere"));
+    expect![[r#"Andr&eacute;-Marie Amp&egrave;re"#]]
+        .assert_eq(&html_string(r"Andr\'e-Marie Amp\`ere"));
     expect![[r#"Schr&ouml;dinger"#]].assert_eq(&html_string(r#"Schr\"odinger"#));
-    expect![[r"&#8491; is the symbol for Angstrom"]].assert_eq(&html_string(r#"\AA\ is the symbol for Angstrom"#));
-    expect![[r#"Andr&eacute;-Marie &Acirc;mp&egrave;re"#]].assert_eq(&html_string(r"Andr\'e-Marie \^Amp\`ere"));
+    expect![[r"&#8491; is the symbol for Angstrom"]]
+        .assert_eq(&html_string(r#"\AA\ is the symbol for Angstrom"#));
+    expect![[r#"Andr&eacute;-Marie &Acirc;mp&egrave;re"#]]
+        .assert_eq(&html_string(r"Andr\'e-Marie \^Amp\`ere"));
 }
 #[test]
 fn escape_underscore() {
@@ -685,11 +697,8 @@ pub fn strip_comments(latex: &str) -> String {
 "#,
     ));
 
-
     let expected = expect![[r##"  <code>This &lt; is cool.</code> it really is"##]];
-    expected.assert_eq(&html_string(
-        r#"  \verb!This < is cool.! it really is"#,
-    ));
+    expected.assert_eq(&html_string(r#"  \verb!This < is cool.! it really is"#));
 }
 
 #[test]
@@ -916,7 +925,6 @@ extra & good
         )
     );
 
-
     expect![[r#"
 
         <table><tr><td>
@@ -925,13 +933,16 @@ extra & good
         <tr><td>
         extra </td><td> good
         </td></tr></table>
-    "#]].assert_eq(&html_string(r"
+    "#]]
+    .assert_eq(&html_string(
+        r"
 \begin{tabular}{ccc}
 foo & bar & baz \\
 \hline
 extra & good
 \end{tabular}
-"));
+",
+    ));
 }
 
 #[test]
