@@ -455,6 +455,11 @@ fn superscripts() {
     expect![[r#"H<sup>2</sup>O"#]]
         .assert_eq(&html_string(r"H$^{2}$O"));
 }
+#[test]
+fn degree() {
+    expect![[r#"15 &deg;C"#]]
+        .assert_eq(&html_string(r"15 $^\circ$C"));
+}
 
 #[test]
 fn object_to_unicode() {
