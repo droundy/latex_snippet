@@ -1214,14 +1214,17 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(sub[1].as_bytes())?;
                             fmt.write_all(b"</sub>")?;
                         } else if let Some(sub) = superscript
-                        .captures_iter(&latex[1..i + 1])
-                        .next()
-                        .or(superscript_other.captures_iter(&latex[1..i + 1]).next())
-                    {
-                        fmt.write_all(b"<sup>")?;
-                        fmt.write_all(sub[1].as_bytes())?;
-                        fmt.write_all(b"</sup>")?;
-                    } else {
+                            .captures_iter(&latex[1..i + 1])
+                            .next()
+                            .or(superscript_other.captures_iter(&latex[1..i + 1]).next())
+                        {
+                            fmt.write_all(b"<sup>")?;
+                            fmt.write_all(sub[1].as_bytes())?;
+                            fmt.write_all(b"</sup>")?;
+                        }
+                        if &latex[1..i + 1] == r"^\circ" {
+                            fmt.write_all(b"<sup>")?;
+                        } else {
                             fmt.write_all(br"\(")?;
                             fmt_math_as_html(fmt, &latex[1..i + 1])?;
                             fmt.write_all(br"\)")?;
