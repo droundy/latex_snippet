@@ -474,6 +474,8 @@ pub fn html_subsubsection(
 
 /// Convert some LaTeX into HTML, and send the results to a `std::io::Write`.
 pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
+    let subscript = regex::Regex::new(r"^_(\d+)$").unwrap();
+    let subscript_other = regex::Regex::new(r"^_\{(\d+)\}$").unwrap();
     let mut latex = latex;
     let latex_sans_stuff: String;
     if latex.contains(r"\{") || latex.contains(r"\}") {
@@ -1201,9 +1203,19 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             latex = &latex[2..];
                         }
                     } else {
-                        fmt.write_all(br"\(")?;
-                        fmt_math_as_html(fmt, &latex[1..i + 1])?;
-                        fmt.write_all(br"\)")?;
+                        if let Some(sub) = subscript
+                            .captures_iter(&latex[1..i + 1])
+                            .next()
+                            .or(subscript_other.captures_iter(&latex[1..i + 1]).next())
+                        {
+                            fmt.write_all(b"<sub>")?;
+                            fmt.write_all(sub[1].as_bytes())?;
+                            fmt.write_all(b"</sub>")?;
+                        } else {
+                            fmt.write_all(br"\(")?;
+                            fmt_math_as_html(fmt, &latex[1..i + 1])?;
+                            fmt.write_all(br"\)")?;
+                        }
                         latex = &latex[i + 2..];
                     }
                 } else {

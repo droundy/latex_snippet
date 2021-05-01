@@ -441,6 +441,13 @@ fn href() {
     expect![[r#"  <a href="url%20with%20spaces">test</a>"#]]
         .assert_eq(&html_string(r"  \href{url\%20with\%20spaces}{test}"));
 }
+#[test]
+fn subscripts() {
+    expect![[r#"H<sub>2</sub>O"#]]
+        .assert_eq(&html_string(r"H$_2$O"));
+    expect![[r#"H<sub>2</sub>O"#]]
+        .assert_eq(&html_string(r"H$_{2}$O"));
+}
 
 #[test]
 fn object_to_unicode() {
