@@ -448,6 +448,13 @@ fn subscripts() {
     expect![[r#"H<sub>2</sub>O"#]]
         .assert_eq(&html_string(r"H$_{2}$O"));
 }
+#[test]
+fn superscripts() {
+    expect![[r#"H<sup>2</sup>O"#]]
+        .assert_eq(&html_string(r"H$^2$O"));
+    expect![[r#"H<sup>2</sup>O"#]]
+        .assert_eq(&html_string(r"H$^{2}$O"));
+}
 
 #[test]
 fn object_to_unicode() {

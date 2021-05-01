@@ -476,6 +476,8 @@ pub fn html_subsubsection(
 pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), std::io::Error> {
     let subscript = regex::Regex::new(r"^_(\d+)$").unwrap();
     let subscript_other = regex::Regex::new(r"^_\{(\d+)\}$").unwrap();
+    let superscript = regex::Regex::new(r"^\^(\d+)$").unwrap();
+    let superscript_other = regex::Regex::new(r"^\^\{(\d+)\}$").unwrap();
     let mut latex = latex;
     let latex_sans_stuff: String;
     if latex.contains(r"\{") || latex.contains(r"\}") {
@@ -1211,7 +1213,15 @@ pub fn html_paragraph(fmt: &mut impl std::io::Write, latex: &str) -> Result<(), 
                             fmt.write_all(b"<sub>")?;
                             fmt.write_all(sub[1].as_bytes())?;
                             fmt.write_all(b"</sub>")?;
-                        } else {
+                        } else if let Some(sub) = superscript
+                        .captures_iter(&latex[1..i + 1])
+                        .next()
+                        .or(superscript_other.captures_iter(&latex[1..i + 1]).next())
+                    {
+                        fmt.write_all(b"<sup>")?;
+                        fmt.write_all(sub[1].as_bytes())?;
+                        fmt.write_all(b"</sup>")?;
+                    } else {
                             fmt.write_all(br"\(")?;
                             fmt_math_as_html(fmt, &latex[1..i + 1])?;
                             fmt.write_all(br"\)")?;
