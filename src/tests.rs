@@ -442,11 +442,71 @@ fn href() {
         .assert_eq(&html_string(r"  \href{url\%20with\%20spaces}{test}"));
 }
 #[test]
-fn subscripts() {
-    expect![[r#"H<sub>2</sub>O"#]]
-        .assert_eq(&html_string(r"H$_2$O"));
-    expect![[r#"H<sub>2</sub>O"#]]
-        .assert_eq(&html_string(r"H$_{2}$O"));
+fn paragraph_breaking_bug() {
+    expect![[r#"
+        <p>
+        First paragraph.
+
+        <ul><li>First
+        </li><li>Second
+        </li></ul>
+
+        </p><p>Second paragraph.
+        </p>"#]]
+        .assert_eq(&html_string(r#"
+First paragraph.
+
+\begin{itemize}
+\item First
+\item Second
+\end{itemize}
+
+Second paragraph.
+"#));
+    expect![[r#"
+        <p>
+        First paragraph.
+
+        <ul><li>First
+
+        </li><li>Second
+        </li></ul>
+
+        </p><p>Second paragraph.
+        </p>"#]]
+        .assert_eq(&html_string(r#"
+First paragraph.
+
+\begin{itemize}
+\item First
+
+\item Second
+\end{itemize}
+
+Second paragraph.
+"#));
+    expect![[r#"
+        <p>
+        First paragraph.
+
+        <dl><dt>First</dt><dd> First
+
+        </dd><dt>Second</dt><dd> Second
+        </dd></dl>
+
+        </p><p>Second paragraph.
+        </p>"#]]
+        .assert_eq(&html_string(r#"
+First paragraph.
+
+\begin{description}
+\item[First] First
+
+\item[Second] Second
+\end{description}
+
+Second paragraph.
+"#));
 }
 #[test]
 fn superscripts() {

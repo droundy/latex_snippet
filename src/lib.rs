@@ -1335,12 +1335,94 @@ contents
 "
         )
     );
+    assert_eq!(
+        r"\begin{center}
+contents
+
+with paragraph
+\end{center}
+
+",
+        finish_paragraph(
+            r"\begin{center}
+contents
+
+with paragraph
+\end{center}
+
+"
+        )
+    );
+    assert_eq!(
+        r"center
+contents
+
+",
+        finish_paragraph(
+            r"center
+contents
+
+with paragraph
+end center
+
+"
+        )
+    );
     assert_eq!("\n\n\n", finish_paragraph("\n\n\nHello world"));
     assert_eq!("\n\n\n\r\n", finish_paragraph("\n\n\n\r\nHello world"));
     assert_eq!(
         "\nFirst me\n\n\n\r\n",
         finish_paragraph("\nFirst me\n\n\n\r\nHello world")
     );
+
+    use expect_test::expect;
+    expect![[r#"
+
+        First paragraph.
+
+        \begin{itemize}
+        \item First
+        \item Second
+        \end{itemize}
+
+    "#]]
+    .assert_eq(finish_paragraph(
+        r#"
+First paragraph.
+
+\begin{itemize}
+\item First
+\item Second
+\end{itemize}
+
+Second paragraph.
+"#,
+    ));
+
+    expect![[r#"
+
+    First paragraph.
+
+    \begin{itemize}
+    \item First
+    
+    \item Second
+    \end{itemize}
+
+"#]]
+    .assert_eq(finish_paragraph(
+        r#"
+First paragraph.
+
+\begin{itemize}
+\item First
+
+\item Second
+\end{itemize}
+
+Second paragraph.
+"#,
+    ));
 }
 
 fn finish_paragraph(latex: &str) -> &str {
@@ -1353,18 +1435,14 @@ fn finish_paragraph(latex: &str) -> &str {
         let next_paragraph = find_paragraph(&latex[so_far..]);
         let next_end = latex[so_far..].find(r"\end{");
         let next_begin = latex[so_far..].find(r"\begin{");
-        if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) {
-            if nestedness == 0 {
+        if earlier(next_paragraph, next_begin) && earlier(next_paragraph, next_end) && nestedness == 0 {
                 if let Some(i) = next_paragraph {
                     return &latex[..so_far + i];
                 } else {
                     // There is no end to this
                     return latex;
                 }
-            } else {
-                return latex;
-            }
-        } else if earlier(next_end, next_begin) {
+        } else if earlier(next_end, next_begin) && next_end.is_some() {
             let i = next_end.unwrap();
             if nestedness == 0 {
                 return &latex[..so_far + i];
@@ -1372,10 +1450,11 @@ fn finish_paragraph(latex: &str) -> &str {
                 nestedness -= 1;
                 so_far += i + r"\\end{".len();
             }
-        } else {
-            let i = next_begin.unwrap();
+        } else if let Some(i) = next_begin {
             nestedness += 1;
             so_far += i + r"\\begin{".len();
+        } else {
+            return latex;
         }
     }
 }
