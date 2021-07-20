@@ -202,7 +202,7 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
         fmt.write_all(latex[..start].as_bytes())?;
         let needs_quote = &latex[start..end];
         latex = &latex[end..];
-        eprintln!("needs quote is {} from {}-{}", needs_quote, start, end);
+        // eprintln!("needs quote is {} from {}-{}", needs_quote, start, end);
         match needs_quote {
             // needs_quote is constrained by needs_quoting_at_start above.
             "<" => fmt.write_all("&lt;".as_bytes())?,
@@ -223,9 +223,7 @@ fn fmt_as_html(fmt: &mut impl std::io::Write, mut latex: &str) -> Result<(), std
                 }
             }
         }
-        println!("   latex is now {}", latex);
     }
-    println!("I got past this now {}", latex);
     fmt.write_all(latex.as_bytes())
 }
 
@@ -1569,8 +1567,6 @@ fn parse_width(option: &str) -> String {
             }
             _ => (),
         }
-    } else {
-        println!("did not find string");
     }
     return "".to_string();
 }
