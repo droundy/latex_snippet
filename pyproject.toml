@@ -1,7 +1,10 @@
 [build-system]
-requires = ["pyo3-pack"]
-build-backend = "pyo3_pack"
+requires = ["maturin>=0.12,<0.13"]
+build-backend = "maturin"
 
-[tool.pyo3-pack]
+[tool.maturin]
 bindings = "cffi"
-manylinux = "off"
+strip = true
+
+# [project]
+# dependencies = ["cffi"]
