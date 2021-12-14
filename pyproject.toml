@@ -6,5 +6,6 @@ build-backend = "maturin"
 bindings = "cffi"
 strip = true
 
-# [project]
-# dependencies = ["cffi"]
+[project]
+name = "latex_snippet"
+dependencies = ["cffi"]
